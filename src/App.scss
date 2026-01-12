@@ -1,0 +1,68 @@
+
+.form {
+  width: 360px;
+  margin: 60px auto;
+  padding: 22px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.form.login {
+  border-color: #4caf50; 
+}
+
+.form.add-user {
+  border-color: #2196f3;
+}
+
+.form h3 {
+  text-align: center;
+  margin-bottom: 5px;
+}
+
+.form input[type="text"],
+.form input[type="email"],
+.form input[type="password"],
+.form input[type="color"],
+.form input:not([type]) {
+  padding: 9px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form.add-user label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.form.add-user input[type="color"] {
+  height: 40px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.form button {
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  background-color: #4caf50;
+  color: orange;
+  font-size: 15px;
+}
+
+.error {
+  color: red;
+  font-size: 12px;
+  text-align: center;
+}
