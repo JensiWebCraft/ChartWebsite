@@ -1,8 +1,8 @@
 import "./Button.scss";
 
-function Button({ text, active, onClick }) {
+function Button({ text, onClick }) {
   return (
-    <button className={`btn ${active ? "active" : ""}`} onClick={onClick}>
+    <button className="btn" onClick={onClick}>
       {text}
     </button>
   );
