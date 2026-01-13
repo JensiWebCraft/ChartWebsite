@@ -1,360 +1,515 @@
-// AddUser.jsx
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
+import InputField from "../components/common/InputField";
+import { useNavigate } from "react-router-dom";
+import "./AddUser.scss";
+import { toast } from "react-toastify";
 
-function AddUser({ onUserCreated }) {
-  const USER_DEFAULT_THEME = {
-    primary: "#4CAF50",
-    secondary: "#2196F6",
-    font: "#212121",
-  };
+const STORAGE_KEY = "users_list";
 
-  const roleLabels = {
-    superadmin: "Super Admin",
-    admin: "Administrator",
-    user: "Regular User",
-  };
+const initialFormData = {
+  name: "",
+  email: "",
+  password: "",
+  role: "user",
+};
 
-  const colorOptions = {
-    primary: [
-      { name: "Green", value: "#4CAF50" },
-      { name: "Blue", value: "#2196F6" },
-      { name: "Orange", value: "#FF9800" },
-    ],
-    secondary: [
-      { name: "Purple", value: "#9C27B0" },
-      { name: "Light Blue", value: "#03A9F4" },
-      { name: "Lime", value: "#CDDC39" },
-    ],
-    font: [
-      { name: "Dark Gray", value: "#212121" },
-      { name: "White", value: "#FFFFFF" },
-      { name: "Deep Orange", value: "#FF5722" },
-    ],
-  };
+const DEFAULT_THEME = {
+  primary: "#4f46e5",
+  secondary: "#22c55e",
+  font: "#111827",
+};
 
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "",
-    theme: USER_DEFAULT_THEME,
+const ADMIN_COLORS = {
+  primary: ["#4f46e5", "#0ea5e9", "#16a34a"],
+  secondary: ["#22c55e", "#f59e0b", "#ef4444"],
+  font: ["#111827", "#1f2937", "#374151"],
+};
+
+const PASSWORD_RULES = {
+  length: /.{8,}/,
+  uppercase: /[A-Z]/,
+  lowercase: /[a-z]/,
+  special: /[!@#$%^&*(),.?":{}|<>]/,
+};
+
+const AddUser = () => {
+  const [existingUsers, setExistingUsers] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored
+      ? JSON.parse(stored)
+      : [{ name: "John Doe", email: "john@example.com" }];
   });
 
+  const [formData, setFormData] = useState(initialFormData);
+  const [theme, setTheme] = useState(DEFAULT_THEME);
   const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [nameSuggestions, setNameSuggestions] = useState([]);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [nameTouched, setNameTouched] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+
+  const passwordChecks = {
+    length: PASSWORD_RULES.length.test(formData.password),
+    uppercase: PASSWORD_RULES.uppercase.test(formData.password),
+    lowercase: PASSWORD_RULES.lowercase.test(formData.password),
+    special: PASSWORD_RULES.special.test(formData.password),
+  };
+  const isPasswordValid =
+    passwordChecks.length &&
+    passwordChecks.uppercase &&
+    passwordChecks.lowercase &&
+    passwordChecks.special;
+
+  const isFormValid = () => {
+    if (!formData.name.trim()) return false;
+    if (formData.name.length < 2) return false;
+    if (checkNameExists(formData.name)) return false;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) return false;
+    if (checkEmailExists(formData.email)) return false;
+
+    if (!PASSWORD_RULES.length.test(formData.password)) return false;
+    if (!PASSWORD_RULES.uppercase.test(formData.password)) return false;
+    if (!PASSWORD_RULES.lowercase.test(formData.password)) return false;
+    if (!PASSWORD_RULES.special.test(formData.password)) return false;
+
+    return true;
+  };
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(existingUsers));
+  }, [existingUsers]);
+
+  useEffect(() => {
+    if (formData.role === "user") {
+      setTheme(DEFAULT_THEME);
+    }
+  }, [formData.role]);
+
+  const checkNameExists = (name) =>
+    existingUsers.some(
+      (u) => u.name.toLowerCase() === name.trim().toLowerCase()
+    );
+
+  const checkEmailExists = (email) =>
+    existingUsers.some(
+      (u) => u.email.toLowerCase() === email.trim().toLowerCase()
+    );
+
+  const generateNameSuggestions = (base) => {
+    if (!base.trim()) return setNameSuggestions([]);
+
+    const clean = base.trim().replace(/\s+/g, "");
+    const list = [];
+    let i = 1;
+
+    while (list.length < 5) {
+      const candidate = `${clean}${i}`;
+      const exists = existingUsers.some(
+        (u) => u.name.toLowerCase() === candidate.toLowerCase()
+      );
+      if (!exists) list.push(candidate);
+      i++;
+    }
+    setNameSuggestions(list);
+  };
+
+  const validateEmail = () => {
+    let error = "";
+    const email = formData.email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email) {
+      error = "Email required";
+    } else if (!emailRegex.test(email)) {
+      error = "Invalid email";
+    } else if (checkEmailExists(email)) {
+      error = "Email already registered";
+    }
+
+    setErrors((prev) => ({ ...prev, email: error }));
+  };
+
+  const validateForm = () => {
+    const err = {};
+
+    if (!formData.name.trim()) err.name = "Name is required";
+    else if (formData.name.length < 2) err.name = "Minimum 2 characters";
+    else if (checkNameExists(formData.name)) err.name = "Name already taken";
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) err.email = "Email required";
+    else if (!emailRegex.test(formData.email)) err.email = "Invalid email";
+    else if (checkEmailExists(formData.email))
+      err.email = "Email already registered";
+
+    if (!formData.password) {
+      err.password = "Password is required";
+    } else if (!PASSWORD_RULES.length.test(formData.password)) {
+      err.password = "Minimum 8 characters required";
+    } else if (!PASSWORD_RULES.uppercase.test(formData.password)) {
+      err.password = "At least 1 uppercase letter required";
+    } else if (!PASSWORD_RULES.lowercase.test(formData.password)) {
+      err.password = "At least 1 lowercase letter required";
+    } else if (!PASSWORD_RULES.special.test(formData.password)) {
+      err.password = "At least 1 special character required";
+    }
+
+    setErrors(err);
+    return Object.keys(err).length === 0;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === "role") {
-      if (value === "user") {
-        setForm({
-          ...form,
-          [name]: value,
-          theme: USER_DEFAULT_THEME,
-        });
-      } else {
-        setForm({ ...form, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "password") {
+      setPasswordTouched(true);
+
+      let error = "";
+
+      if (!PASSWORD_RULES.length.test(value)) {
+        error = "Minimum 8 characters required";
+      } else if (!PASSWORD_RULES.uppercase.test(value)) {
+        error = "At least 1 uppercase letter required";
+      } else if (!PASSWORD_RULES.lowercase.test(value)) {
+        error = "At least 1 lowercase letter required";
+      } else if (!PASSWORD_RULES.special.test(value)) {
+        error = "At least 1 special character required";
       }
-    } else {
-      setForm({ ...form, [name]: value });
+
+      setErrors((prev) => ({ ...prev, password: error }));
     }
 
-    setErrors({ ...errors, [name]: "" });
-  };
-
-  const handleThemeChange = (type, value) => {
-    if (form.role === "user") return;
-
-    setForm({
-      ...form,
-      theme: { ...form.theme, [type]: value },
-    });
+    if (name === "name" && value.length >= 2 && checkNameExists(value)) {
+      generateNameSuggestions(value);
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setSubmitted(true);
 
-    const newErrors = {};
+    if (!validateForm()) {
+      toast.error("Please correct the errors");
+      return;
+    }
 
-    if (!form.name.trim()) newErrors.name = "Name is required";
-    if (!form.email.trim()) newErrors.email = "Email is required";
-    if (!form.role) newErrors.role = "Please select a role";
-    if (form.password.length === 0) newErrors.password = "Password is required";
-    else if (form.password.length < 8)
-      newErrors.password = "Password must be at least 8 characters";
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length > 0) return;
-
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    users.push({
-      ...form,
+    const newUser = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      password: formData.password,
+      role: formData.role,
+      theme: formData.role === "user" ? DEFAULT_THEME : theme,
       createdAt: new Date().toISOString(),
-    });
-    localStorage.setItem("users", JSON.stringify(users));
+    };
 
-    alert("User created successfully!");
-    onUserCreated?.();
+    const updatedUsers = [...existingUsers, newUser];
 
-    setForm({
-      name: "",
-      email: "",
-      password: "",
-      role: "",
-      theme: USER_DEFAULT_THEME,
-    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
+    setExistingUsers(updatedUsers);
+
+    toast.success("User created successfully 🎉");
+
+    setFormData(initialFormData);
     setErrors({});
+    setSubmitted(false);
+    setNameSuggestions([]);
+    setPasswordTouched(false);
+    setNameTouched(false);
+    setEmailTouched(false);
+
+    // OPTIONAL: redirect after short delay
+    // setTimeout(() => navigate("/"), 1500);
   };
 
   return (
     <div className="add-user-container">
-      <form className="add-user-form" onSubmit={handleSubmit}>
-        <h2>Add New User</h2>
+      <div className="card">
+        <h2>Create New User</h2>
 
-        {/* NAME */}
-        <div className="form-group">
-          <label>Name</label>
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Full name"
-          />
-          {errors.name && <span className="error">{errors.name}</span>}
-        </div>
+        <form onSubmit={handleSubmit} noValidate>
+          <div style={{ position: "relative" }}>
+            <InputField
+              label="Full Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              onBlur={() => setNameTouched(true)}
+              error={submitted || nameTouched ? errors.name : ""}
+            />
 
-        {/* EMAIL */}
-        <div className="form-group">
-          <label>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="example@domain.com"
-          />
-          {errors.email && <span className="error">{errors.email}</span>}
-        </div>
-
-        {/* PASSWORD */}
-        <div className="form-group">
-          <label>Password</label>
-          <input
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="Minimum 8 characters"
-          />
-          {errors.password && <span className="error">{errors.password}</span>}
-        </div>
-
-        {/* ROLE */}
-        <div className="form-group">
-          <label>Role</label>
-          <div className="role-radio-group">
-            {["superadmin", "admin", "user"].map((r) => (
-              <label key={r} className="radio-label">
-                <input
-                  type="radio"
-                  name="role"
-                  value={r}
-                  checked={form.role === r}
-                  onChange={handleChange}
-                />
-                {roleLabels[r]}
-              </label>
-            ))}
+            {nameSuggestions.length > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  width: "100%",
+                  background: "#fff",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,.1)",
+                  zIndex: 10,
+                }}
+              >
+                {nameSuggestions.map((s) => (
+                  <div
+                    key={s}
+                    onClick={() => {
+                      setFormData((p) => ({ ...p, name: s }));
+                      setErrors((p) => ({ ...p, name: "" }));
+                      setNameSuggestions([]);
+                      setSubmitted(false);
+                    }}
+                    style={{
+                      padding: "8px 12px",
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "#f1f5f9")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "#fff")
+                    }
+                  >
+                    {s}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          {errors.role && <span className="error">{errors.role}</span>}
-        </div>
+          <InputField
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => {
+              handleChange(e);
+              if (emailTouched) validateEmail();
+            }}
+            onBlur={() => {
+              setEmailTouched(true);
+              validateEmail();
+            }}
+            error={submitted || emailTouched ? errors.email : ""}
+          />
 
-        {/* ===================== THEME SELECTION ===================== */}
+          <InputField
+            label="Password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            error={passwordTouched ? errors.password : ""}
+          />
+          {passwordTouched && !isPasswordValid && (
+            <ul style={{ fontSize: "12px", marginTop: "6px" }}>
+              <li style={{ color: passwordChecks.length ? "green" : "red" }}>
+                {passwordChecks.length ? "✔" : "✖"} Minimum 8 characters
+              </li>
+              <li style={{ color: passwordChecks.uppercase ? "green" : "red" }}>
+                {passwordChecks.uppercase ? "✔" : "✖"} 1 uppercase letter
+              </li>
+              <li style={{ color: passwordChecks.lowercase ? "green" : "red" }}>
+                {passwordChecks.lowercase ? "✔" : "✖"} 1 lowercase letter
+              </li>
+              <li style={{ color: passwordChecks.special ? "green" : "red" }}>
+                {passwordChecks.special ? "✔" : "✖"} 1 special character
+              </li>
+            </ul>
+          )}
 
-        {form.role === "superadmin" && (
-          <div className="theme-section">
-            <h3>Custom Theme</h3>
-            <div className="superadmin-theme-grid">
-              {["primary", "secondary", "font"].map((type) => (
-                <div key={type} className="color-picker-group">
-                  <label className="color-label">
-                    {type.charAt(0).toUpperCase() + type.slice(1)} Color
-                  </label>
-
-                  <div className="color-swatches">
-                    {[
-                      "#4CAF50",
-                      "#66BB6A",
-                      "#81C784",
-                      "#2196F6",
-                      "#42A5F5",
-                      "#64B5F6",
-                      "#FF9800",
-                      "#FFB74D",
-                      "#FFCC80",
-                      "#F44336",
-                      "#EF5350",
-                      "#E57373",
-                      "#9C27B0",
-                      "#AB47BC",
-                      "#CE93D8",
-                      "#009688",
-                      "#26A69A",
-                      "#4DB6AC",
-                    ].map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        className={`color-swatch ${
-                          form.theme[type] === color ? "selected" : ""
-                        }`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => handleThemeChange(type, color)}
-                        title={color}
-                        aria-label={`Select color ${color}`}
-                      />
-                    ))}
-
-                    {/* Custom color picker */}
-                    <div className="custom-color-wrapper">
-                      <input
-                        type="color"
-                        value={form.theme[type]}
-                        onChange={(e) =>
-                          handleThemeChange(type, e.target.value)
-                        }
-                        className="hidden-color-input"
-                        id={`color-picker-${type}`}
-                      />
-                      <label
-                        htmlFor={`color-picker-${type}`}
-                        className={`color-swatch custom-swatch ${
-                          form.theme[type] ===
-                          document.getElementById(`color-picker-${type}`)?.value
-                            ? "selected"
-                            : ""
-                        }`}
-                        style={{ backgroundColor: form.theme[type] }}
-                      >
-                        <span className="custom-icon">✦</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="selected-color-preview">
-                    <div
-                      className="big-color-preview"
-                      style={{ backgroundColor: form.theme[type] }}
-                    />
-                    <span className="hex-code">
-                      {form.theme[type].toUpperCase()}
-                    </span>
-                  </div>
-                </div>
+          <div style={{ marginTop: "12px" }}>
+            <label>Role</label>
+            <div style={{ display: "flex", gap: "16px" }}>
+              {["superadmin", "admin", "user"].map((r) => (
+                <label key={r}>
+                  <input
+                    type="radio"
+                    name="role"
+                    value={r}
+                    checked={formData.role === r}
+                    onChange={handleChange}
+                  />{" "}
+                  {r.toUpperCase()}
+                </label>
               ))}
             </div>
           </div>
-        )}
 
-        {form.role === "admin" && (
-          <div className="theme-section">
-            <h3>Theme Settings</h3>
-            <div className="theme-card">
-              <div className="theme-card-header">Primary Color</div>
-              <select
-                value={form.theme.primary}
-                onChange={(e) => handleThemeChange("primary", e.target.value)}
-              >
-                {colorOptions.primary.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.name}
-                  </option>
-                ))}
-              </select>
+          <div className="form-group" style={{ marginTop: "20px" }}>
+            <label className="form-label">Theme Selection</label>
+            {formData.role === "superadmin" && (
               <div
-                className="color-display"
-                style={{ backgroundColor: form.theme.primary }}
-              />
-            </div>
-
-            <div className="theme-card">
-              <div className="theme-card-header">Secondary Color</div>
-              <select
-                value={form.theme.secondary}
-                onChange={(e) => handleThemeChange("secondary", e.target.value)}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: "16px",
+                }}
               >
-                {colorOptions.secondary.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.name}
-                  </option>
+                {["primary", "secondary", "font"].map((key) => (
+                  <div
+                    key={key}
+                    style={{
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "10px",
+                      padding: "12px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <p style={{ fontSize: "13px", marginBottom: "8px" }}>
+                      {key.toUpperCase()}
+                    </p>
+                    <input
+                      type="color"
+                      value={theme[key]}
+                      onChange={(e) =>
+                        setTheme((prev) => ({ ...prev, [key]: e.target.value }))
+                      }
+                      style={{
+                        width: "100%",
+                        height: "40px",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    />
+                  </div>
                 ))}
-              </select>
-              <div
-                className="color-display"
-                style={{ backgroundColor: form.theme.secondary }}
-              />
-            </div>
-
-            <div className="theme-card">
-              <div className="theme-card-header">Text Color</div>
-              <select
-                value={form.theme.font}
-                onChange={(e) => handleThemeChange("font", e.target.value)}
-              >
-                {colorOptions.font.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.name}
-                  </option>
-                ))}
-              </select>
-              <div
-                className="color-display"
-                style={{ backgroundColor: form.theme.font }}
-              />
-              <div className="font-sample" style={{ color: form.theme.font }}>
-                Aa Bb Cc Preview
               </div>
-            </div>
+            )}
+            {formData.role === "admin" && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: "10px",
+                }}
+              >
+                {Object.keys(ADMIN_COLORS).map((key) => (
+                  <div
+                    key={key}
+                    style={{
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "5px",
+                      padding: "5px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      {key.toUpperCase()}
+                    </p>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: "5px",
+                      }}
+                    >
+                      {ADMIN_COLORS[key].map((color) => {
+                        const selected = theme[key] === color;
+
+                        return (
+                          <div
+                            key={color}
+                            onClick={() =>
+                              setTheme((prev) => ({ ...prev, [key]: color }))
+                            }
+                            style={{
+                              width: "17px",
+                              height: "17px",
+                              borderRadius: "50%",
+                              background: color,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              border: selected
+                                ? "3px solid #111"
+                                : "2px solid #e5e7eb",
+                            }}
+                          >
+                            {selected && (
+                              <span
+                                style={{
+                                  color: "#fff",
+                                  fontSize: "16px",
+                                  fontWeight: "bold",
+                                }}
+                              >
+                                ✓
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {formData.role === "user" && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: "16px",
+                }}
+              >
+                {Object.entries(DEFAULT_THEME).map(([key, color]) => (
+                  <div
+                    key={key}
+                    style={{
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "10px",
+                      padding: "12px",
+                      textAlign: "center",
+                      opacity: 0.6,
+                    }}
+                  >
+                    <p style={{ fontSize: "13px", marginBottom: "8px" }}>
+                      {key.toUpperCase()}
+                    </p>
+                    <div
+                      style={{
+                        width: "26px",
+                        height: "26px",
+                        margin: "0 auto",
+                        borderRadius: "50%",
+                        background: color,
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                    <small style={{ fontSize: "11px", color: "#6b7280" }}>
+                      Default
+                    </small>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
 
-        {form.role === "user" && (
-          <div className="theme-section fixed-theme">
-            <h3>Theme (Fixed for Users)</h3>
-            <div className="fixed-preview-grid">
-              <div className="fixed-item">
-                <div
-                  className="small-color"
-                  style={{ backgroundColor: form.theme.primary }}
-                />
-                <span>Primary</span>
-              </div>
-              <div className="fixed-item">
-                <div
-                  className="small-color"
-                  style={{ backgroundColor: form.theme.secondary }}
-                />
-                <span>Secondary</span>
-              </div>
-              <div className="fixed-item">
-                <div
-                  className="small-color"
-                  style={{ backgroundColor: form.theme.font }}
-                />
-                <span>Text</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <button type="submit" className="submit-button">
-          Create User
-        </button>
-      </form>
+          <button
+            style={{ marginTop: "20px" }}
+            type="submit"
+            className="btn"
+            disabled={!isFormValid()}
+          >
+            Create User
+          </button>
+        </form>
+      </div>
     </div>
   );
-}
+};
 
 export default AddUser;

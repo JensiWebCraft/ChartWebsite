@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { applyTheme } from "../utils/applyTheme";
+import "./Login.scss";
+import { toast } from "react-toastify";
 
 function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState("");
@@ -8,20 +11,22 @@ function Login({ onLoginSuccess }) {
   const handleLogin = (e) => {
     e.preventDefault();
 
-    const savedUser = JSON.parse(localStorage.getItem("user"));
+    const users = JSON.parse(localStorage.getItem("users_list")) || [];
 
-    if (!savedUser) {
-      setError("No user found. Please add user first.");
+    const user = users.find(
+      (u) => u.email === email && u.password === password
+    );
+
+    if (!user) {
+      setError("User not found or password incorrect");
       return;
     }
 
-    if (email === savedUser.email && password === savedUser.password) {
-      localStorage.setItem("themeColor", savedUser.theme);
-      localStorage.setItem("role", savedUser.role);
-      onLoginSuccess();
-    } else {
-      setError("Invalid email or password");
-    }
+    localStorage.setItem("activeUser", JSON.stringify(user));
+
+    applyTheme(user.theme, user.role);
+    toast.success("Login successful 🎉");
+    onLoginSuccess();
   };
 
   return (

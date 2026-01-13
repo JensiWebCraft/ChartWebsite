@@ -1,18 +1,13 @@
-@use "../../styles/variables" as *;
-
 .btn {
-  padding: 10px 25px;
+  background: var(--primary);
+  color: var(--font);
+  padding: 10px 16px;
+  border-radius: 6px;
   border: none;
   cursor: pointer;
-  font-size: 16px;
+  transition: 0.3s;
+}
 
-  background-color: $primary;
-  color: white;
-
-  transition: background-color 0.3s ease, color 0.3s ease;
-
-  &:hover {
-    background-color: $secondary;
-    color: $hover-text;
-  }
+.btn:hover {
+  background: var(--secondary);
 }

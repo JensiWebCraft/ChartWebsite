@@ -1,0 +1,75 @@
+.form.login {
+  width: 100%;
+  max-width: 380px;
+  margin: 80px auto;
+  padding: 28px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  font-family: "Segoe UI", sans-serif;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  &:hover {
+    transform: translateY(-3px);
+  }
+
+  h3 {
+    text-align: center;
+    margin-bottom: 22px;
+    color: #6366f1;
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  .error {
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  input {
+    width: 90%;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    color: var(--font);
+    outline: none;
+    transition: 0.25s;
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+
+    &:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    border-radius: 10px;
+    border: none;
+    background: #6366f1;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+}
