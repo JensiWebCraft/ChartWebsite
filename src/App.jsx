@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
+import "react-toastify/dist/ReactToastify.css";
 import AuthTabs from "./components/AuthTabs/AuthTabs";
 import Layout from "./components/Layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import AddUser from "./pages/AddUser";
 import LoginSuccess from "./components/Animation/LoginSucess";
 import { applyTheme } from "./utils/applyTheme";
+import { ToastContainer } from "react-toastify";
 
 function App() {
   const [authStage, setAuthStage] = useState("auth");
@@ -32,6 +33,11 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        style={{ zIndex: 10000 }}
+      />
       {/* LOGIN SUCCESS ANIMATION */}
       {authStage === "animating" && <LoginSuccess />}
 
