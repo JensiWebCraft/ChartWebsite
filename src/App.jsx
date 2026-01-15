@@ -5,6 +5,8 @@ import AddUser from "./pages/AddUser";
 import Layout from "./components/Layout/Layout";
 import { applyTheme } from "./utils/applyTheme";
 import { useEffect, useState } from "react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -25,8 +27,8 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ToastContainer position="top-right" autoClose={3000} />
       <Routes>
-        {/* 🔐 AUTH TABS (FIRST PAGE) */}
         <Route
           path="/"
           element={
@@ -38,7 +40,6 @@ function App() {
           }
         />
 
-        {/* 🔒 PROTECTED ROUTES */}
         {isLoggedIn && (
           <Route element={<Layout onLogout={handleLogout} />}>
             <Route path="/dashboard" element={<Dashboard />} />

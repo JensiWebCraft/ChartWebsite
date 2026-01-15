@@ -1,22 +1,24 @@
-const Header = ({ onLogout }) => {
+import getInitials from "../../utils/getInitials";
+import "./Header.scss";
+
+const Header = () => {
+  const user = JSON.parse(localStorage.getItem("activeUser"));
+
+  const initials = getInitials(user?.name);
+
   return (
-    <header
-      style={{
-        height: "60px",
-        background: "var(--primary)",
-        color: "#fff",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "0 20px",
-        position: "fixed",
-        left: 0,
-        top: 0,
-        right: 0,
-      }}
-    >
+    <header className="header">
       <h3>Admin Panel</h3>
-      <button onClick={onLogout}>Logout</button>
+
+      <div className="header-right">
+        <div className="profile">
+          <div className="info">
+            <span className="name">{user?.name}</span>
+            <span className="role">{user?.role}</span>
+          </div>
+          <div className="avatar">{initials}</div>
+        </div>
+      </div>
     </header>
   );
 };

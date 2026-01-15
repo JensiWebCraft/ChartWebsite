@@ -1,31 +1,41 @@
 import { NavLink } from "react-router-dom";
+import {
+  FaHome,
+  FaUserPlus,
+  FaTasks,
+  FaPlusCircle,
+  FaClipboardCheck,
+  FaSignOutAlt,
+} from "react-icons/fa";
+import "./Sidebar.scss";
 
-const Sidebar = () => {
-  const linkStyle = ({ isActive }) => ({
-    display: "block",
-    padding: "10px",
-    color: isActive ? "var(--secondary)" : "#fff",
-    textDecoration: "none",
-    fontWeight: isActive ? "600" : "400",
-    position: "fixed",
-    top: "60px",
-  });
-
+const Sidebar = ({ onLogout }) => {
   return (
-    <aside
-      style={{
-        width: "220px",
-        background: "#111827",
-        padding: "20px",
-      }}
-    >
-      <NavLink to="/dashboard" style={linkStyle}>
-        Dashboard
+    <aside className="sidebar">
+      <NavLink to="/dashboard">
+        <FaHome />
+        <span>Dashboard</span>
       </NavLink>
 
-      <NavLink to="/add-user" style={linkStyle}>
-        Add User
+      <NavLink to="/add-task">
+        <FaTasks />
+        <span>Add Task</span>
       </NavLink>
+
+      <NavLink to="/create-task">
+        <FaPlusCircle />
+        <span>Create Task</span>
+      </NavLink>
+
+      <NavLink to="/assign-task">
+        <FaClipboardCheck />
+        <span>Assign Task</span>
+      </NavLink>
+
+      <button className="logout-btn" onClick={onLogout}>
+        <FaSignOutAlt />
+        <span>Logout</span>
+      </button>
     </aside>
   );
 };

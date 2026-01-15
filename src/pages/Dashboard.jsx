@@ -1,6 +1,6 @@
 import React from "react";
 
-const Dashboard = ({ onLogout }) => {
+const Dashboard = () => {
   const user = JSON.parse(localStorage.getItem("activeUser"));
 
   if (!user) {
@@ -24,7 +24,6 @@ const Dashboard = ({ onLogout }) => {
       </p>
       <p>Role: {user.role}</p>
 
-      {/* PRIMARY BUTTON WITH HOVER → SECONDARY */}
       <button
         style={{
           background: "var(--primary)",
@@ -39,21 +38,6 @@ const Dashboard = ({ onLogout }) => {
         onMouseLeave={(e) => (e.target.style.background = "var(--primary)")}
       >
         Dashboard Button
-      </button>
-
-      {/* LOGOUT */}
-      <button
-        onClick={onLogout}
-        style={{
-          background: "#ef4444",
-          color: "#fff",
-          padding: "10px 16px",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-        }}
-      >
-        Logout
       </button>
     </div>
   );

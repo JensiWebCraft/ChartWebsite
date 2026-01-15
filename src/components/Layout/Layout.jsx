@@ -7,12 +7,12 @@ import "./Layout.scss";
 const Layout = ({ onLogout }) => {
   return (
     <div className="layout">
-      <Header onLogout={onLogout} />
+      <Header />
 
       <div className="layout-body">
-        <Sidebar />
+        <Sidebar onLogout={onLogout} />
         <main className="layout-content">
-          <Outlet /> {/* ROUTED PAGE */}
+          <Outlet />
         </main>
       </div>
 

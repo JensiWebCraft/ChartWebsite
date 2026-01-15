@@ -1,15 +1,32 @@
+import "./Footer.scss";
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaTwitter,
+  FaGithub,
+  FaYoutube,
+} from "react-icons/fa";
+
 const Footer = () => {
   return (
-    <footer
-      style={{
-        height: "40px",
-        background: "#e5e7eb",
-        textAlign: "center",
-        lineHeight: "40px",
-        fontSize: "14px",
-      }}
-    >
-      © 2026 Admin Panel
+    <footer className="footer">
+      <div className="socials">
+        <FaFacebookF />
+        <FaInstagram />
+        <FaTwitter />
+        <FaGithub />
+        <FaYoutube />
+      </div>
+
+      <ul className="links">
+        <li>Home</li>
+        <li>News</li>
+        <li>About</li>
+        <li>Contact</li>
+        <li>Our Team</li>
+      </ul>
+
+      <p>© 2026 Designed by FAHEEM</p>
     </footer>
   );
 };
