@@ -25,8 +25,6 @@ const Footer = () => {
         <li>Contact</li>
         <li>Our Team</li>
       </ul>
-
-      <p>© 2026 Designed by FAHEEM</p>
     </footer>
   );
 };

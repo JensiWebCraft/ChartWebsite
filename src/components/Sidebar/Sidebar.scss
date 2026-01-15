@@ -1,11 +1,17 @@
+:root {
+  --border: #e5e7eb;
+  --bg-main: #ffffff;
+}
+
 .sidebar {
   position: fixed;
   top: 60px; /* header height */
   left: 0;
   height: calc(100vh - 60px);
   width: 220px; /* FULL SIDEBAR */
-  background: #0f172a;
-  color: #fff;
+  background: var(--bg-soft);
+  border-right: 1px solid var(--border);
+  color: #0f172a;
   padding-top: 10px;
   transition: width 0.3s ease;
   overflow-x: hidden;
@@ -16,7 +22,7 @@
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    color: #fff;
+    color: #0f172a;
     text-decoration: none;
     background: none;
     border: none;
@@ -24,7 +30,7 @@
     cursor: pointer;
 
     &:hover {
-      background: #1e293b;
+      background: #e2e8f0;
     }
   }
 

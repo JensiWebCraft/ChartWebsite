@@ -17,7 +17,7 @@ const Dashboard = () => {
         minHeight: "100vh",
       }}
     >
-      <h2 style={{ color: "var(--primary)" }}>Dashboard</h2>
+      <h2 style={{ color: "black" }}>Dashboard</h2>
 
       <p>
         Welcome, <strong>{user.name}</strong>
