@@ -1,55 +1,53 @@
+import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import AuthTabs from "./components/AuthTabs/AuthTabs";
+import Layout from "./components/Layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import AddUser from "./pages/AddUser";
-import Layout from "./components/Layout/Layout";
+import LoginSuccess from "./components/Animation/LoginSucess";
 import { applyTheme } from "./utils/applyTheme";
-import { useEffect, useState } from "react";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authStage, setAuthStage] = useState("auth");
+  // auth | animating | app
 
-  // 🔹 Auto login
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("activeUser"));
     if (user) {
       applyTheme(user.theme, user.role);
-      setIsLoggedIn(true);
+      setAuthStage("app");
     }
   }, []);
 
+  const handleLoginSuccess = () => {
+    setAuthStage("animating");
+    setTimeout(() => setAuthStage("app"), 1800);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("activeUser");
-    setIsLoggedIn(false);
+    setAuthStage("auth");
   };
 
   return (
     <BrowserRouter>
-      <ToastContainer position="top-right" autoClose={3000} />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            isLoggedIn ? (
-              <Navigate to="/dashboard" />
-            ) : (
-              <AuthTabs onLoginSuccess={() => setIsLoggedIn(true)} />
-            )
-          }
-        />
+      {/* LOGIN SUCCESS ANIMATION */}
+      {authStage === "animating" && <LoginSuccess />}
 
-        {isLoggedIn && (
+      {/* AUTH PAGE */}
+      {authStage === "auth" && <AuthTabs onLoginSuccess={handleLoginSuccess} />}
+
+      {/* MAIN APP */}
+      {authStage === "app" && (
+        <Routes>
           <Route element={<Layout onLogout={handleLogout} />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/add-user" element={<AddUser />} />
+            <Route path="*" element={<Navigate to="/dashboard" />} />
           </Route>
-        )}
-
-        {/* 🚫 FALLBACK */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+        </Routes>
+      )}
     </BrowserRouter>
   );
 }

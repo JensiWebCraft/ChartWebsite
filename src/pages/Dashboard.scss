@@ -1,6 +1,33 @@
-.dashboard {
-  min-height: 100vh;
-  padding: 20px;
-  background: var(--admin-bg);
+// .dashboard {
+//   min-height: 100vh;
+//   padding: 20px;
+//   background: var(--admin-bg);
+//   color: var(--font);
+// }
+.page {
+  opacity: 0;
+  filter: blur(6px);
+  animation: reveal 0.35s ease-out forwards;
+}
+
+@keyframes reveal {
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.primary-btn {
+  margin-top: 16px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: none;
+  background: var(--primary);
   color: var(--font);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.primary-btn:hover {
+  background: var(--secondary);
 }

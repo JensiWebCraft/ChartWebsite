@@ -1,0 +1,39 @@
+.login-success {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  backdrop-filter: blur(0px);
+  animation: successReveal 1.8s ease forwards;
+
+  z-index: 9999;
+}
+
+/* 🎬 Animation */
+@keyframes successReveal {
+  0% {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.05);
+  }
+
+  20% {
+    opacity: 1;
+    filter: blur(6px);
+    transform: scale(1);
+  }
+
+  80% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+
+  100% {
+    opacity: 0;
+    filter: blur(0px);
+  }
+}

@@ -10,13 +10,13 @@ import {
 const Footer = () => {
   return (
     <footer className="footer">
-      <div className="socials">
+      {/* <div className="socials">
         <FaFacebookF />
         <FaInstagram />
         <FaTwitter />
         <FaGithub />
         <FaYoutube />
-      </div>
+      </div> */}
 
       <ul className="links">
         <li>Home</li>

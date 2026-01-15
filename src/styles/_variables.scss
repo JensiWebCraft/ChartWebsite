@@ -10,20 +10,3 @@
   --accent-hover: #1d4ed8;
 }
 
-.dashboard {
-  background: var(--admin-bg);
-  color: var(--font);
-
-  h2 {
-    color: var(--primary);
-  }
-
-  button {
-    background: var(--primary);
-    color: white;
-
-    &:hover {
-      background: var(--secondary);
-    }
-  }
-}
