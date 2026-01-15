@@ -3,7 +3,7 @@ import Login from "../../pages/Login";
 import AddUser from "../../pages/AddUser";
 import "./AuthTabs.scss";
 
-function AuthTabs({ onLogin }) {
+function AuthTabs({ onLoginSuccess }) {
   const [active, setActive] = useState("login");
 
   return (
@@ -25,7 +25,7 @@ function AuthTabs({ onLogin }) {
       </div>
 
       {active === "login" ? (
-        <Login onLoginSuccess={onLogin} />
+        <Login onLoginSuccess={onLoginSuccess} />
       ) : (
         <AddUser onUserCreated={() => setActive("login")} />
       )}

@@ -137,7 +137,10 @@ const AddUser = () => {
 
     if (!formData.name.trim()) err.name = "Name is required";
     else if (formData.name.length < 2) err.name = "Minimum 2 characters";
-    else if (checkNameExists(formData.name)) err.name = "Name already taken";
+    else if (checkNameExists(formData.name)) {
+      err.name = "Name already taken";
+      generateNameSuggestions(formData.name);
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) err.email = "Email required";

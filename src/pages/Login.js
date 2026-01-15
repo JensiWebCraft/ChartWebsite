@@ -1,3 +1,0 @@
-const LoginEndPoint = {
-    Login : "Login"
-}
