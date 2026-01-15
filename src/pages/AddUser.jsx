@@ -64,7 +64,7 @@ const AddUser = () => {
   const isFormValid = () => {
     if (!formData.name.trim()) return false;
     if (formData.name.length < 2) return false;
-    if (checkNameExists(formData.name)) return false;
+    // if (checkNameExists(formData.name)) return false;
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) return false;
@@ -245,7 +245,7 @@ const AddUser = () => {
               error={submitted || nameTouched ? errors.name : ""}
             />
 
-            {nameSuggestions.length > 0 && (
+            {(errors.name || submitted) && nameSuggestions.length > 0 && (
               <div
                 style={{
                   position: "absolute",
@@ -283,6 +283,7 @@ const AddUser = () => {
               </div>
             )}
           </div>
+
           <InputField
             label="Email"
             name="email"
