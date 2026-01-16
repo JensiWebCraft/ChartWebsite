@@ -8,6 +8,7 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   font-family: "Segoe UI", sans-serif;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+
   &:hover {
     transform: translateY(-3px);
   }
@@ -37,7 +38,6 @@
     border-radius: 8px;
     border: 1px solid #d1d5db;
     font-size: 14px;
-    color: var(--font);
     outline: none;
     transition: 0.25s;
 
@@ -70,6 +70,20 @@
 
     &:active {
       transform: scale(0.98);
+    }
+  }
+
+  /* 📱 MOBILE RESPONSIVE */
+  @media (max-width: 480px) {
+    margin: 40px 16px;
+    padding: 20px;
+
+    h3 {
+      font-size: 20px;
+    }
+
+    button {
+      font-size: 14px;
     }
   }
 }

@@ -11,7 +11,6 @@ import { ToastContainer } from "react-toastify";
 
 function App() {
   const [authStage, setAuthStage] = useState("auth");
-  // auth | animating | app
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("activeUser"));
@@ -38,13 +37,11 @@ function App() {
         autoClose={3000}
         style={{ zIndex: 10000 }}
       />
-      {/* LOGIN SUCCESS ANIMATION */}
+
       {authStage === "animating" && <LoginSuccess />}
 
-      {/* AUTH PAGE */}
       {authStage === "auth" && <AuthTabs onLoginSuccess={handleLoginSuccess} />}
 
-      {/* MAIN APP */}
       {authStage === "app" && (
         <Routes>
           <Route element={<Layout onLogout={handleLogout} />}>
