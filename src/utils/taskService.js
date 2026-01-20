@@ -7,4 +7,6 @@ export const getTasks = () => {
 export const saveTasks = (tasks) => {
   localStorage.setItem(TASK_KEY, JSON.stringify(tasks));
   // window.dispatchEvent(new Event("tasksUpdated"));
+
+  window.dispatchEvent(new Event("tasksUpdated"));
 };

@@ -1,4 +1,5 @@
 import { getTasks } from "../../utils/taskService";
+import "./TaskList.scss";
 
 const TaskList = () => {
   const user = JSON.parse(localStorage.getItem("activeUser"));
@@ -10,19 +11,32 @@ const TaskList = () => {
       : allTasks.filter((t) => t.createdBy === user.email);
 
   return (
-    <div className="page">
-        
+    <div className="task-page">
       <h2>Task List</h2>
 
-      {visibleTasks.length === 0 && <p>No tasks found</p>}
+      {visibleTasks.length === 0 && <p className="empty">No tasks found</p>}
 
-      {visibleTasks.map((t) => (
-        <div key={t.id} className="task-card">
-          <h4>{t.title}</h4>
-          <p>{t.description}</p>
-          <b>Status: {t.status}</b>
-        </div>
-      ))}
+      <table className="task-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {visibleTasks.map((t) => (
+            <tr key={t.id}>
+              <td>{t.title}</td>
+              <td>{t.description}</td>
+              <td>
+                <span className={`status ${t.status}`}>{t.status}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

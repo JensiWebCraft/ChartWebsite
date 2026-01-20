@@ -1,0 +1,51 @@
+.assign-page {
+  padding: 40px;
+  width: 800px;
+  margin: auto;
+
+  h2 {
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  .empty {
+    text-align: center;
+    color: #64748b;
+    margin-top: 40px;
+  }
+}
+
+.assign-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+
+  th,
+  td {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  tr:not(:last-child) {
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #cbd5f5;
+    font-size: 13px;
+    cursor: pointer;
+  }
+}

@@ -38,8 +38,14 @@ const Analysis = () => {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 1000);
-    return () => clearInterval(interval);
+
+    const refresh = () => loadData();
+
+    window.addEventListener("tasksUpdated", refresh);
+
+    return () => {
+      window.removeEventListener("tasksUpdated", refresh);
+    };
   }, []);
 
   return (

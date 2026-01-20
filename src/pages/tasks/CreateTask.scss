@@ -1,0 +1,90 @@
+.create-task-wrapper {
+  width: 1120px;
+  margin: auto;
+  padding: 40px;
+  background: #f1f5f9;
+  border-radius: 12px;
+
+  h2 {
+    margin-bottom: 24px;
+    font-size: 24px;
+    font-weight: 600;
+  }
+}
+
+.task-form {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 22px;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  label {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    background: #f8fafc;
+  }
+
+  textarea {
+    min-height: 100px;
+    resize: none;
+  }
+}
+
+.field.full {
+  grid-column: span 2;
+}
+
+.range-value {
+  position: absolute;
+  right: 10px;
+  top: 36px;
+  font-size: 12px;
+  background: #475569;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.actions {
+  //   margin-top: 30px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+
+  button {
+    padding: 12px 26px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+  }
+
+  .submit {
+    background: green;
+    color: #ffffff;
+  }
+
+  .cancel {
+    background: #9ca3af;
+    color: #ffffff;
+  }
+}

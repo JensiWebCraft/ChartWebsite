@@ -6,7 +6,6 @@ const MyTasks = () => {
   const user = JSON.parse(localStorage.getItem("activeUser"));
   const [tasks, setTasks] = useState([]);
 
-  // ✅ ALWAYS filter by email
   useEffect(() => {
     const allTasks = getTasks();
     setTasks(allTasks.filter((t) => t.assignedTo === user.email));
@@ -22,7 +21,7 @@ const MyTasks = () => {
       return {
         ...task,
         status,
-        updatedAt: now, // ✅ ALWAYS set
+        updatedAt: now,
         completedAt: status === "completed" ? now : task.completedAt || null,
       };
     });
