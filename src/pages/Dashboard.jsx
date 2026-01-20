@@ -1,21 +1,23 @@
-import "./Dashboard.scss";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("activeUser"));
-  if (!user) return null;
 
-  return (
-    <div className="page">
-      <h2>Dashboard</h2>
+  useEffect(() => {
+    if (!user) return;
 
-      <p>
-        Welcome, <strong>{user.name}</strong>
-      </p>
-      <p>Role: {user.role}</p>
+    if (user.role === "superadmin") {
+      navigate("/dashboard", { replace: true });
+    } else if (user.role === "admin") {
+      navigate("/dashboard", { replace: true });
+    } else {
+      navigate("/dashboard", { replace: true });
+    }
+  }, []);
 
-      <button className="primary-btn">Dashboard Button</button>
-    </div>
-  );
+  return null;
 };
 
 export default Dashboard;

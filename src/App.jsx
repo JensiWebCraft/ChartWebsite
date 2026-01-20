@@ -4,10 +4,18 @@ import "react-toastify/dist/ReactToastify.css";
 import AuthTabs from "./components/AuthTabs/AuthTabs";
 import Layout from "./components/Layout/Layout";
 import Dashboard from "./pages/Dashboard";
-import AddUser from "./pages/AddUser";
 import LoginSuccess from "./components/Animation/LoginSucess";
+// import SuperAdminDashboard from "./pages/dashboard/SuperAdminDashboard";
+// import AdminDashboard from "./pages/dashboard/AdminDashboard";
+// import UserDashboard from "./pages/dashboard/UserDashboard";
+import ProtectedRoute from "./components/common/ProtectedRoute";
 import { applyTheme } from "./utils/applyTheme";
 import { ToastContainer } from "react-toastify";
+import CreateTask from "./pages/tasks/CreateTask";
+import AssignTask from "./pages/tasks/AssignTask";
+import TaskList from "./pages/tasks/TaskList";
+import MyTasks from "./pages/tasks/MyTasks";
+import Analysis from "./pages/Analysis/Analysis";
 
 function App() {
   const [authStage, setAuthStage] = useState("auth");
@@ -27,6 +35,8 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem("activeUser");
+    localStorage.removeItem("role");
+    localStorage.removeItem("theme");
     setAuthStage("auth");
   };
 
@@ -46,7 +56,79 @@ function App() {
         <Routes>
           <Route element={<Layout onLogout={handleLogout} />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/add-user" element={<AddUser />} />
+
+            {/* <Route
+              path="/superadmin/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["superadmin"]}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/user/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["user"]}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            /> */}
+
+            <Route
+              path="/tasks/create"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                  <CreateTask />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/tasks/list"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                  <TaskList />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/tasks/assign"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                  <AssignTask />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/tasks/my"
+              element={
+                <ProtectedRoute allowedRoles={["user"]}>
+                  <MyTasks />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/analysis"
+              element={
+                <ProtectedRoute allowedRoles={["superadmin", "admin", "user"]}>
+                  <Analysis />
+                </ProtectedRoute>
+              }
+            />
+
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </Route>
         </Routes>
