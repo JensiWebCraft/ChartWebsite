@@ -37,8 +37,8 @@ const TrendChart = ({ tasks }) => {
         dataSource={{
           chart: {
             caption: "Task Status Distribution",
-            theme: "fusion",
-            paletteColors: "#22c55e,#38bdf8,#fbbf24,#ef4444,#6366f1",
+            theme: "candy",
+            paletteColors: "#22c55e,#38bdf8,#fbbf24,#6366f1,#ef4444",
             showValues: "1",
           },
           data,

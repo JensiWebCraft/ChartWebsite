@@ -14,6 +14,7 @@
   color: #0f172a;
   padding-top: 10px;
   transition: width 0.3s ease;
+  overflow-y: auto;
   overflow-x: hidden;
 
   a,
@@ -41,6 +42,11 @@
 }
 
 @media (max-width: 768px) {
+  .layout-content {
+    margin-left: 60px;
+    width: calc(100vw - 60px);
+  }
+
   .sidebar {
     width: 60px;
 

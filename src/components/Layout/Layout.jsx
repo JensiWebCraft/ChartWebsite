@@ -11,9 +11,9 @@ const Layout = ({ onLogout }) => {
 
       <div className="layout-body">
         <Sidebar onLogout={onLogout} />
-        <main className="layout-content">
+        <div className="layout-content">
           <Outlet />
-        </main>
+        </div>
       </div>
 
       <Footer />

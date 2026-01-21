@@ -57,33 +57,6 @@ function App() {
           <Route element={<Layout onLogout={handleLogout} />}>
             <Route path="/dashboard" element={<Dashboard />} />
 
-            {/* <Route
-              path="/superadmin/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["superadmin"]}>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/admin/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/user/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["user"]}>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            /> */}
-
             <Route
               path="/tasks/create"
               element={
@@ -128,6 +101,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/tasks/edit/:id" element={<CreateTask />} />
 
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </Route>

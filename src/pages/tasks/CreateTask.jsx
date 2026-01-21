@@ -1,63 +1,105 @@
-import { useState } from "react";
-import { getTasks, saveTasks } from "../../utils/taskService";
+import { useEffect, useState } from "react";
+import { getTasks, saveTasks, getTaskById } from "../../utils/taskService";
+import { useParams, useNavigate } from "react-router-dom";
 import "./CreateTask.scss";
 
 const initialForm = {
   title: "",
-  status: "Not Started",
-  assignTo: "",
-  priority: "High",
-  progress: 45,
-  division: "",
-  group: "Not Started",
   description: "",
+  priority: "High",
+  status: "pending",
+  assignTo: "",
   startDate: "",
   dueDate: "",
+  images: [],
 };
 
 const CreateTask = () => {
   const user = JSON.parse(localStorage.getItem("activeUser"));
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isEdit = Boolean(id);
+
   const [form, setForm] = useState(initialForm);
 
+  /* 🔹 LOAD TASK FOR EDIT */
+  useEffect(() => {
+    if (isEdit) {
+      const task = getTaskById(id);
+      if (task) {
+        setForm({
+          title: task.title || "",
+          description: task.description || "",
+          priority: task.priority || "High",
+          status: task.status || "pending",
+          assignTo: task.assignedTo || "",
+          startDate: task.startDate || "",
+          dueDate: task.dueDate || "",
+          images: task.images || [],
+        });
+      }
+    }
+  }, [id, isEdit]);
+
+  /* 🔹 HANDLE INPUT */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((p) => ({ ...p, [name]: value }));
   };
 
+  /* 🔹 IMAGE DRAG & DROP */
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files).filter((f) =>
+      f.type.startsWith("image/"),
+    );
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setForm((p) => ({ ...p, images: [...p.images, reader.result] }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  /* 🔹 SUBMIT */
   const handleSubmit = () => {
     if (!form.title.trim()) {
-      alert("Title is required");
+      alert("Title required");
       return;
     }
 
     const tasks = getTasks();
 
-    tasks.push({
-      id: Date.now(),
-      title: form.title,
-      description: form.description,
-      status: "pending",
-      progress: Number(form.progress),
-      priority: form.priority,
-      createdBy: user.email,
-      assignedTo: form.assignTo || null,
-      createdAt: new Date().toISOString(),
-    });
+    if (isEdit) {
+      const updated = tasks.map((t) =>
+        t.id === Number(id)
+          ? { ...t, ...form, updatedAt: new Date().toISOString() }
+          : t,
+      );
 
-    saveTasks(tasks);
+      saveTasks(updated);
+      alert("Task updated successfully");
+    } else {
+      saveTasks([
+        ...tasks,
+        {
+          id: Date.now(),
+          ...form,
+          createdBy: user.email,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+      alert("Task created successfully");
+    }
 
-    setForm(initialForm);
-
-    alert("Task created successfully");
-  };
-
-  const handleCancel = () => {
-    setForm(initialForm);
+    navigate("/tasks/list");
   };
 
   return (
     <div className="create-task-wrapper">
-      <h2>Create Task</h2>
+      <h2>{isEdit ? "Edit Task" : "Create Task"}</h2>
 
       <div className="task-form">
         <div className="field">
@@ -66,26 +108,17 @@ const CreateTask = () => {
         </div>
 
         <div className="field">
-          <label>Task Status *</label>
+          <label>Status</label>
           <select name="status" value={form.status} onChange={handleChange}>
-            <option>Not Started</option>
-            <option>In Progress</option>
-            <option>Completed</option>
+            <option value="pending">Pending</option>
+            <option value="inprogress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
           </select>
         </div>
 
         <div className="field">
-          <label>Assign To *</label>
-          <input
-            name="assignTo"
-            placeholder="User email"
-            value={form.assignTo}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="field">
-          <label>Priority *</label>
+          <label>Priority</label>
           <select name="priority" value={form.priority} onChange={handleChange}>
             <option>High</option>
             <option>Medium</option>
@@ -93,39 +126,33 @@ const CreateTask = () => {
           </select>
         </div>
 
-        <div className="field">
-          <label>% Complete</label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            name="progress"
-            value={form.progress}
-            onChange={handleChange}
-          />
-          <span className="range-value">{form.progress}%</span>
-        </div>
-
-        <div className="field">
-          <label>Group *</label>
-          <select name="group" value={form.group} onChange={handleChange}>
-            <option>Not Started</option>
-            <option>Development</option>
-            <option>Testing</option>
-          </select>
-        </div>
-
         <div className="field full">
-          <label>Description *</label>
+          <label>Description</label>
           <textarea
             name="description"
             value={form.description}
             onChange={handleChange}
           />
+
+          <div
+            className="image-drop-zone"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+          >
+            Drag & drop images here
+          </div>
+
+          {form.images.length > 0 && (
+            <div className="image-preview">
+              {form.images.map((img, i) => (
+                <img key={i} src={img} alt="task" />
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="field">
-          <label>Start Date *</label>
+          <label>Start Date</label>
           <input
             type="date"
             name="startDate"
@@ -135,7 +162,7 @@ const CreateTask = () => {
         </div>
 
         <div className="field">
-          <label>Due Date *</label>
+          <label>Due Date</label>
           <input
             type="date"
             name="dueDate"
@@ -147,9 +174,9 @@ const CreateTask = () => {
 
       <div className="actions">
         <button className="submit" onClick={handleSubmit}>
-          SUBMIT
+          {isEdit ? "UPDATE" : "CREATE"}
         </button>
-        <button className="cancel" onClick={handleCancel}>
+        <button className="cancel" onClick={() => navigate("/tasks/list")}>
           CANCEL
         </button>
       </div>
