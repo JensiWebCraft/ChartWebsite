@@ -4,18 +4,16 @@
 }
 
 .sidebar {
-  position: fixed;
-  top: 60px;
-  left: 0;
-  height: calc(100vh - 60px);
   width: 220px;
+  height: calc(100vh - 60px);
   background: var(--bg-soft);
   border-right: 1px solid var(--border);
-  color: #0f172a;
   padding-top: 10px;
-  transition: width 0.3s ease;
+
   overflow-y: auto;
   overflow-x: hidden;
+
+  flex-shrink: 0; // ⭐ REQUIRED
 
   a,
   .logout-btn {

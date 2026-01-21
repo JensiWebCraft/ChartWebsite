@@ -8,14 +8,12 @@ const Layout = ({ onLogout }) => {
   return (
     <div className="layout">
       <Header />
-
       <div className="layout-body">
-        <Sidebar onLogout={onLogout} />
+        <Sidebar />
         <div className="layout-content">
           <Outlet />
         </div>
       </div>
-
       <Footer />
     </div>
   );
