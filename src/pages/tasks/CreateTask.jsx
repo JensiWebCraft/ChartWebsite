@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { getTasks, saveTasks, getTaskById } from "../../utils/taskService";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./CreateTask.scss";
 
 const initialForm = {
@@ -163,6 +165,7 @@ const CreateTask = () => {
             : t,
         ),
       );
+      toast.success("Task updated successfully ✅");
     } else {
       saveTasks([
         ...tasks,
@@ -173,13 +176,17 @@ const CreateTask = () => {
           createdAt: new Date().toISOString(),
         },
       ]);
+      toast.success("Task created successfully 🎉");
     }
 
-    navigate("/tasks/list");
+    setTimeout(() => {
+      navigate("/tasks/list");
+    }, 1800);
   };
 
   return (
     <div className="create-task-wrapper">
+      <ToastContainer position="top-right" autoClose={2000} />
       <h2>{isEdit ? "Edit Task" : "Create Task"}</h2>
 
       <div className="task-form">

@@ -9,7 +9,7 @@ const Layout = ({ onLogout }) => {
     <div className="layout">
       <Header />
       <div className="layout-body">
-        <Sidebar />
+        <Sidebar onLogout={onLogout} />
         <div className="layout-content">
           <Outlet />
         </div>

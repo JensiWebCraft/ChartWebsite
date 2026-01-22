@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
-import { getTasks, deleteTask } from "../../utils/taskService";
+import { getTasks } from "../../utils/taskService";
 import "./TaskList.scss";
 import { FiEdit, FiTrash2, FiDownload } from "react-icons/fi";
 import { downloadCSV } from "../../utils/csvExport";
 import { useNavigate } from "react-router-dom";
 import TaskDetailsModal from "./TaskDetailsModal";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const STATUSES = ["inprogress", "completed", "failed"];
+/* ✅ ADD PENDING COLUMN */
+const STATUSES = ["pending", "inprogress", "completed", "failed"];
 
 const TaskList = () => {
   const user = JSON.parse(localStorage.getItem("activeUser"));
@@ -30,15 +33,57 @@ const TaskList = () => {
     setTasks(visible);
   };
 
-  /* 🔹 AUTO REFRESH */
   useEffect(() => {
     loadData();
     window.addEventListener("tasksUpdated", loadData);
     return () => window.removeEventListener("tasksUpdated", loadData);
   }, [selectedUser]);
 
+  /* 🔹 PERMISSION */
+  const canDragTask = (task) => {
+    if (user.role === "superadmin") return true;
+    return task.assignedTo === user.email;
+  };
+
+  /* 🔹 DRAG START */
+  const onDragStart = (e, task) => {
+    if (!canDragTask(task)) return;
+    e.dataTransfer.setData("taskId", task.id);
+  };
+
+  /* 🔹 DROP (STATUS UPDATE + TOAST) */
+  const onDrop = (e, newStatus) => {
+    e.preventDefault();
+
+    const taskId = Number(e.dataTransfer.getData("taskId"));
+    if (!taskId) return;
+
+    const all = getTasks();
+    const updated = all.map((t) =>
+      t.id === taskId ? { ...t, status: newStatus } : t,
+    );
+
+    localStorage.setItem("tasks", JSON.stringify(updated));
+    window.dispatchEvent(new Event("tasksUpdated"));
+
+    toast.success(`Task moved to ${newStatus.toUpperCase()}`);
+  };
+
+  /* 🔹 DELETE TASK */
+  const handleDelete = (taskId) => {
+    if (!window.confirm("Delete this task?")) return;
+
+    const updated = getTasks().filter((t) => t.id !== taskId);
+    localStorage.setItem("tasks", JSON.stringify(updated));
+    window.dispatchEvent(new Event("tasksUpdated"));
+
+    toast.error("Task deleted");
+  };
+
   return (
     <div className="task-board">
+      <ToastContainer position="top-right" autoClose={2000} />
+
       {/* HEADER */}
       <div className="filter-bar">
         <h3>Tasks</h3>
@@ -70,21 +115,34 @@ const TaskList = () => {
           const statusTasks = tasks.filter((t) => t.status === status);
 
           return (
-            <div key={status} className={`column ${status}`}>
-              <h4>{status.toUpperCase()}</h4>
+            <div
+              key={status}
+              className={`column ${status}`}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => onDrop(e, status)}
+            >
+              <h4>
+                {status === "inprogress"
+                  ? "In Progress"
+                  : status.charAt(0).toUpperCase() + status.slice(1)}
+              </h4>
 
-              {statusTasks.length === 0 && <p className="empty">No tasks</p>}
+              {statusTasks.length === 0 && (
+                <p className="empty">Drop tasks here</p>
+              )}
 
               {statusTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="task-card"
+                  className={`task-card ${
+                    canDragTask(task) ? "draggable" : "locked"
+                  }`}
+                  draggable={canDragTask(task)}
+                  onDragStart={(e) => onDragStart(e, task)}
                   onClick={() => setActiveTask(task)}
                 >
                   <h5>{task.title}</h5>
-                  <p>{task.description}</p>
 
-                  {/* ACTIONS */}
                   <div className="actions" onClick={(e) => e.stopPropagation()}>
                     <FiEdit
                       title="Edit"
@@ -92,11 +150,7 @@ const TaskList = () => {
                     />
                     <FiTrash2
                       title="Delete"
-                      onClick={() => {
-                        if (window.confirm("Delete this task?")) {
-                          deleteTask(task.id);
-                        }
-                      }}
+                      onClick={() => handleDelete(task.id)}
                     />
                   </div>
                 </div>
@@ -106,7 +160,7 @@ const TaskList = () => {
         })}
       </div>
 
-      {/* TASK DETAILS MODAL */}
+      {/* MODAL */}
       {activeTask && (
         <TaskDetailsModal
           task={activeTask}

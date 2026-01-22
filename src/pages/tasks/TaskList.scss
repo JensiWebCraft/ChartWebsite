@@ -40,8 +40,8 @@
 /* ================= COLUMNS ================= */
 .columns {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
+  grid-template-columns: repeat(4, 1fr); /* 🔥 MUST BE 4 */
+  gap: 1rem;
 }
 
 /* ================= COLUMN ================= */
@@ -83,6 +83,13 @@
   border-top: 6px solid #ef4444;
   h4 {
     color: #b91c1c;
+  }
+}
+
+.column.pending {
+  border-top: 6px solid orange;
+  h4 {
+    color: orange;
   }
 }
 
@@ -166,6 +173,45 @@
     color: #15803d;
     transform: scale(1.15);
   }
+}
+.columns {
+  display: flex;
+  gap: 16px;
+}
+
+.column {
+  flex: 1;
+  min-height: 320px; // 🔴 REQUIRED FOR DROP
+  background: #f1f5f9;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.column h4 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.task-card {
+  background: white;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.task-card.draggable {
+  cursor: grab;
+}
+
+.task-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.empty {
+  text-align: center;
+  color: #94a3b8;
 }
 
 /* ================= RESPONSIVE ================= */
