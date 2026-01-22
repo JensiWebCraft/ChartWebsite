@@ -213,6 +213,42 @@
   text-align: center;
   color: #94a3b8;
 }
+.assigned-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.assigned-name {
+  color: #374151;
+  font-weight: 500;
+}
+
+.role-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* ROLE COLORS */
+.role-badge.user {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.role-badge.admin {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.role-badge.superadmin {
+  background: #fee2e2;
+  color: #991b1b;
+}
 
 /* ================= RESPONSIVE ================= */
 @media (max-width: 1024px) {

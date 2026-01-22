@@ -22,6 +22,10 @@ const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [activeTask, setActiveTask] = useState(null);
 
+  const getAssignedUser = (email) => {
+    return users.find((u) => u.email === email);
+  };
+
   /* 🔹 LOAD TASKS */
   const loadData = () => {
     const all = getTasks();
@@ -131,30 +135,49 @@ const TaskList = () => {
                 <p className="empty">Drop tasks here</p>
               )}
 
-              {statusTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className={`task-card ${
-                    canDragTask(task) ? "draggable" : "locked"
-                  }`}
-                  draggable={canDragTask(task)}
-                  onDragStart={(e) => onDragStart(e, task)}
-                  onClick={() => setActiveTask(task)}
-                >
-                  <h5>{task.title}</h5>
+              {statusTasks.map((task) => {
+                const assignedUser = getAssignedUser(task.assignedTo);
 
-                  <div className="actions" onClick={(e) => e.stopPropagation()}>
-                    <FiEdit
-                      title="Edit"
-                      onClick={() => navigate(`/tasks/edit/${task.id}`)}
-                    />
-                    <FiTrash2
-                      title="Delete"
-                      onClick={() => handleDelete(task.id)}
-                    />
+                return (
+                  <div
+                    key={task.id}
+                    className={`task-card ${
+                      canDragTask(task) ? "draggable" : "locked"
+                    }`}
+                    draggable={canDragTask(task)}
+                    onDragStart={(e) => onDragStart(e, task)}
+                    onClick={() => setActiveTask(task)}
+                  >
+                    <h5>{task.title}</h5>
+
+                    {/* ✅ ASSIGNED INFO */}
+                    {assignedUser && (
+                      <div className="assigned-info">
+                        <span className="assigned-name">
+                          {assignedUser.name}
+                        </span>
+                        <span className={`role-badge ${assignedUser.role}`}>
+                          {assignedUser.role}
+                        </span>
+                      </div>
+                    )}
+
+                    <div
+                      className="actions"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <FiEdit
+                        title="Edit"
+                        onClick={() => navigate(`/tasks/edit/${task.id}`)}
+                      />
+                      <FiTrash2
+                        title="Delete"
+                        onClick={() => handleDelete(task.id)}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           );
         })}
