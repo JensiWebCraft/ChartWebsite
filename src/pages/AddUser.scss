@@ -1,46 +1,47 @@
-// .add-user-page {
-//   background: #f8fafc;
-//   padding: 2rem 1rem;
-//   min-height: calc(100vh - 120px);
-// }
+.add-user-page {
+  background: #f8fafc;
+  padding: 2rem 1rem;
+  min-height: calc(100vh - 120px);
+}
 
-// .add-user-container {
-//   width: 100%;
-//   max-width: 500px;
-//   margin: 0 auto;
-// }
+.add-user-container {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
 
-// .card {
-//   background: white;
-//   border-radius: 16px;
-//   box-shadow:
-//     0 20px 25px -5px rgb(0 0 0 / 0.08),
-//     0 10px 10px -5px rgb(0 0 0 / 0.04);
-//   padding: 2.75rem 2.25rem;
-//   transition:
-//     transform 0.25s ease,
-//     box-shadow 0.25s ease;
+.card {
+  background: white;
+  border-radius: 16px;
+  color: #111827;
+  box-shadow:
+    0 20px 25px -5px rgb(0 0 0 / 0.08),
+    0 10px 10px -5px rgb(0 0 0 / 0.04);
+  padding: 2.75rem 2.25rem;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 
-//   &:hover {
-//     transform: translateY(-3px);
-//     box-shadow:
-//       0 25px 35px -5px rgb(0 0 0 / 0.1),
-//       0 10px 15px -6px rgb(0 0 0 / 0.05);
-//   }
-// }
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 25px 35px -5px rgb(0 0 0 / 0.1),
+      0 10px 15px -6px rgb(0 0 0 / 0.05);
+  }
+}
 
-// .title {
-//   margin: 0 0 2.5rem;
-//   font-size: 1.875rem;
-//   font-weight: 700;
-//   color: #111827;
-//   letter-spacing: -0.025em;
-// }
+.title {
+  margin: 0 0 2.5rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.025em;
+}
 
-// .form-grid {
-//   display: grid;
-//   gap: 1.75rem;
-// }
+.form-grid {
+  display: grid;
+  gap: 1.75rem;
+}
 
 .btn {
   width: 100%;
