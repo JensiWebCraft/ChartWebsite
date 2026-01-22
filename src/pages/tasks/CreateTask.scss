@@ -127,3 +127,34 @@
   border-radius: 8px;
   object-fit: cover;
 }
+.description-editor {
+  border: 1px solid #ccc;
+  min-height: 150px;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.img-block {
+  position: relative;
+  display: inline-block;
+  margin: 6px 0;
+}
+
+.img-block img {
+  max-width: 220px;
+  max-height: 160px;
+  border-radius: 6px;
+}
+
+.remove-img {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: red;
+  color: white;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+}

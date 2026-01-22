@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getTasks, saveTasks, getTaskById } from "../../utils/taskService";
 import { useParams, useNavigate } from "react-router-dom";
 import "./CreateTask.scss";
@@ -11,7 +11,6 @@ const initialForm = {
   assignTo: "",
   startDate: "",
   dueDate: "",
-  images: [],
 };
 
 const CreateTask = () => {
@@ -21,49 +20,133 @@ const CreateTask = () => {
   const isEdit = Boolean(id);
 
   const [form, setForm] = useState(initialForm);
+  const editorRef = useRef(null);
 
-  /* 🔹 LOAD TASK FOR EDIT */
+  const compressImage = (file, maxWidth = 600, quality = 0.6) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+
+      reader.onload = () => {
+        const img = new Image();
+        img.src = reader.result;
+
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const scale = maxWidth / img.width;
+
+          canvas.width = maxWidth;
+          canvas.height = img.height * scale;
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+      };
+    });
+  };
+
+  /* LOAD TASK FOR EDIT */
   useEffect(() => {
-    if (isEdit) {
-      const task = getTaskById(id);
-      if (task) {
-        setForm({
-          title: task.title || "",
-          description: task.description || "",
-          priority: task.priority || "High",
-          status: task.status || "pending",
-          assignTo: task.assignedTo || "",
-          startDate: task.startDate || "",
-          dueDate: task.dueDate || "",
-          images: task.images || [],
-        });
+    if (!isEdit) return;
+
+    const task = getTaskById(id);
+    if (!task) return;
+
+    setForm({
+      title: task.title || "",
+      description: task.description || "",
+      priority: task.priority || "High",
+      status: task.status || "pending",
+      assignTo: task.assignedTo || "",
+      startDate: task.startDate || "",
+      dueDate: task.dueDate || "",
+    });
+
+    // ✅ restore HTML (image + text)
+    setTimeout(() => {
+      if (editorRef.current) {
+        editorRef.current.innerHTML = task.description || "";
       }
-    }
+    }, 0);
   }, [id, isEdit]);
 
-  /* 🔹 HANDLE INPUT */
+  /* INPUT CHANGE */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((p) => ({ ...p, [name]: value }));
   };
 
-  /* 🔹 IMAGE DRAG & DROP */
-  const handleDrop = (e) => {
+  /* INSERT IMAGE (AUTO SMALL) */
+  const insertImage = (src) => {
+    if (!editorRef.current) return;
+
+    editorRef.current.insertAdjacentHTML(
+      "beforeend",
+      `
+      <div class="img-block" contenteditable="false">
+        <img src="${src}" />
+        <button class="remove-img" data-remove>×</button>
+      </div>
+      <p><br/></p>
+    `,
+    );
+
+    setForm((p) => ({
+      ...p,
+      description: editorRef.current.innerHTML,
+    }));
+  };
+
+  /* HANDLE IMAGE PASTE */
+  const handlePaste = async (e) => {
+    const items = e.clipboardData.items;
+
+    for (let item of items) {
+      if (item.type.startsWith("image")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        const compressed = await compressImage(file);
+        insertImage(compressed);
+      }
+    }
+  };
+
+  /* HANDLE IMAGE DROP */
+  const handleDrop = async (e) => {
     e.preventDefault();
+
     const files = Array.from(e.dataTransfer.files).filter((f) =>
       f.type.startsWith("image/"),
     );
 
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setForm((p) => ({ ...p, images: [...p.images, reader.result] }));
-      };
-      reader.readAsDataURL(file);
-    });
+    for (let file of files) {
+      const compressed = await compressImage(file);
+      insertImage(compressed);
+    }
   };
 
-  /* 🔹 SUBMIT */
+  /* REMOVE IMAGE CLICK */
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const handler = (e) => {
+      if (e.target.dataset.remove !== undefined) {
+        e.target.parentElement.remove();
+        setForm((p) => ({
+          ...p,
+          description: editor.innerHTML,
+        }));
+      }
+    };
+
+    editor.addEventListener("click", handler);
+    return () => editor.removeEventListener("click", handler);
+  }, []);
+
+  /* SUBMIT */
   const handleSubmit = () => {
     if (!form.title.trim()) {
       alert("Title required");
@@ -73,14 +156,13 @@ const CreateTask = () => {
     const tasks = getTasks();
 
     if (isEdit) {
-      const updated = tasks.map((t) =>
-        t.id === Number(id)
-          ? { ...t, ...form, updatedAt: new Date().toISOString() }
-          : t,
+      saveTasks(
+        tasks.map((t) =>
+          t.id === Number(id)
+            ? { ...t, ...form, updatedAt: new Date().toISOString() }
+            : t,
+        ),
       );
-
-      saveTasks(updated);
-      alert("Task updated successfully");
     } else {
       saveTasks([
         ...tasks,
@@ -91,7 +173,6 @@ const CreateTask = () => {
           createdAt: new Date().toISOString(),
         },
       ]);
-      alert("Task created successfully");
     }
 
     navigate("/tasks/list");
@@ -126,29 +207,23 @@ const CreateTask = () => {
           </select>
         </div>
 
+        {/* DESCRIPTION */}
         <div className="field full">
           <label>Description</label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-          />
-
           <div
-            className="image-drop-zone"
-            onDragOver={(e) => e.preventDefault()}
+            className="description-editor"
+            contentEditable
+            ref={editorRef}
+            onInput={() =>
+              setForm((p) => ({
+                ...p,
+                description: editorRef.current.innerHTML,
+              }))
+            }
+            onPaste={handlePaste}
             onDrop={handleDrop}
-          >
-            Drag & drop images here
-          </div>
-
-          {form.images.length > 0 && (
-            <div className="image-preview">
-              {form.images.map((img, i) => (
-                <img key={i} src={img} alt="task" />
-              ))}
-            </div>
-          )}
+            onDragOver={(e) => e.preventDefault()}
+          ></div>
         </div>
 
         <div className="field">

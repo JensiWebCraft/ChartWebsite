@@ -30,7 +30,11 @@ const AssignTask = () => {
         {unassigned.map((task) => (
           <div key={task.id} className="assign-card">
             <h4>{task.title}</h4>
-            <p>{task.description}</p>
+
+            <div
+              className="task-desc"
+              dangerouslySetInnerHTML={{ __html: task.description }}
+            />
 
             <select
               defaultValue=""
