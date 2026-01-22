@@ -14,7 +14,7 @@ function Login({ onLoginSuccess }) {
     const users = JSON.parse(localStorage.getItem("users_list")) || [];
 
     const user = users.find(
-      (u) => u.email === email && u.password === password
+      (u) => u.email === email && u.password === password,
     );
 
     if (!user) {
@@ -25,8 +25,13 @@ function Login({ onLoginSuccess }) {
     localStorage.setItem("activeUser", JSON.stringify(user));
 
     applyTheme(user.theme, user.role);
-    toast.success("Login successful 🎉");
-    onLoginSuccess();
+    toast.success("Login successful 🎉", {
+      onOpen: () => {
+        setTimeout(() => {
+          onLoginSuccess();
+        }, 500);
+      },
+    });
   };
 
   return (
