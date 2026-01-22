@@ -13,25 +13,22 @@ function Login({ onLoginSuccess }) {
 
     const users = JSON.parse(localStorage.getItem("users_list")) || [];
 
+    if (!users.length) {
+      setError("No users found. Please create a user first.");
+      return;
+    }
+
     const user = users.find(
       (u) => u.email === email && u.password === password,
     );
 
     if (!user) {
-      setError("User not found or password incorrect");
+      setError("Invalid email or password");
       return;
     }
 
     localStorage.setItem("activeUser", JSON.stringify(user));
-
-    applyTheme(user.theme, user.role);
-    toast.success("Login successful 🎉", {
-      onOpen: () => {
-        setTimeout(() => {
-          onLoginSuccess();
-        }, 500);
-      },
-    });
+    onLoginSuccess();
   };
 
   return (
