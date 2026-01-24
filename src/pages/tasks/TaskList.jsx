@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import TaskDetailsModal from "./TaskDetailsModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import BackButton from "../../components/BackButton/BackButton";
 
 /* ✅ ADD PENDING COLUMN */
 const STATUSES = ["pending", "inprogress", "completed", "failed"];
@@ -50,17 +51,37 @@ const TaskList = () => {
   };
 
   /* 🔹 DRAG START */
+  /* 🔹 DRAG START – make sure data is set and effect is allowed */
   const onDragStart = (e, task) => {
     if (!canDragTask(task)) return;
-    e.dataTransfer.setData("taskId", task.id);
+
+    e.dataTransfer.setData("text/plain", task.id.toString());
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.dropEffect = "move";
   };
 
-  /* 🔹 DROP (STATUS UPDATE + TOAST) */
+  /* 🔹 Allow drop – must be on EVERY potential drop target */
+  const allowDrop = (e) => {
+    e.preventDefault(); // must call this
+    e.stopPropagation(); // sometimes helps
+    e.dataTransfer.dropEffect = "move"; // visual feedback
+  };
+
+  /* 🔹 DROP – add logging to debug */
   const onDrop = (e, newStatus) => {
     e.preventDefault();
+    e.stopPropagation();
 
-    const taskId = Number(e.dataTransfer.getData("taskId"));
-    if (!taskId) return;
+    const taskIdRaw =
+      e.dataTransfer.getData("text/plain") || e.dataTransfer.getData("taskId");
+    const taskId = Number(taskIdRaw);
+
+    console.log(`[DROP] on ${newStatus} - taskId:`, taskId); // ← check console!
+
+    if (isNaN(taskId) || !taskId) {
+      console.warn("Invalid taskId from dataTransfer");
+      return;
+    }
 
     const all = getTasks();
     const updated = all.map((t) =>
@@ -90,8 +111,6 @@ const TaskList = () => {
 
       {/* HEADER */}
       <div className="filter-bar">
-        <h3>Tasks</h3>
-
         {user.role === "superadmin" && (
           <select
             value={selectedUser}
@@ -122,7 +141,11 @@ const TaskList = () => {
             <div
               key={status}
               className={`column ${status}`}
-              onDragOver={(e) => e.preventDefault()}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+              }}
+              onDragOver={allowDrop}
               onDrop={(e) => onDrop(e, status)}
             >
               <h4>
@@ -141,11 +164,11 @@ const TaskList = () => {
                 return (
                   <div
                     key={task.id}
-                    className={`task-card ${
-                      canDragTask(task) ? "draggable" : "locked"
-                    }`}
+                    className={`task-card ${canDragTask(task) ? "draggable" : "locked"}`}
                     draggable={canDragTask(task)}
                     onDragStart={(e) => onDragStart(e, task)}
+                    onDragOver={allowDrop}
+                    onDrop={(e) => onDrop(e, task.status)}
                     onClick={() => setActiveTask(task)}
                   >
                     <h5>{task.title}</h5>

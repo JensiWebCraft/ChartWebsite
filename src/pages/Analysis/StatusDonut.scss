@@ -1,0 +1,94 @@
+.chart-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 14px;
+  position: relative;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* HEADER */
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+
+  h4 {
+    font-size: 15px;
+    font-weight: 600;
+  }
+}
+
+/* MENU */
+.menu-wrapper {
+  position: relative;
+}
+
+.menu-icon {
+  font-size: 18px;
+  cursor: pointer;
+  color: #475569;
+}
+
+/* DROPDOWN */
+.chart-menu {
+  position: absolute;
+  right: 0;
+  top: 26px;
+  width: 150px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  z-index: 10;
+
+  .menu-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    margin: 6px 8px;
+  }
+
+  button {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 6px 8px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 13px;
+    border-radius: 4px;
+
+    &:hover {
+      background: #f1f5f9;
+    }
+  }
+
+  hr {
+    margin: 6px 0;
+    border: none;
+    border-top: 1px solid #e5e7eb;
+  }
+}
+.chart-menu button {
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* 🔥 ACTIVE THEME */
+.chart-menu button.active {
+  background-color: #6366f1; /* highlight color */
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* hover effect */
+.chart-menu button:hover {
+  background-color: rgba(99, 102, 241, 0.15);
+}

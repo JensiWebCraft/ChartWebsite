@@ -12,7 +12,11 @@ const TaskDetailsModal = ({ task, onClose }) => {
         </button>
 
         <h3>{task.title}</h3>
-        <p className="desc">{task.description}</p>
+        {/* <p className="desc">{task.description}</p> */}
+        <div
+          className="task-desc"
+          dangerouslySetInnerHTML={{ __html: task.description }}
+        />
 
         <div className="meta">
           <span>

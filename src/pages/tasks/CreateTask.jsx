@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./CreateTask.scss";
+import BackButton from "../../components/BackButton/BackButton";
 
 const initialForm = {
   title: "",
@@ -186,6 +187,7 @@ const CreateTask = () => {
 
   return (
     <div className="create-task-wrapper">
+      <BackButton />
       <ToastContainer position="top-right" autoClose={2000} />
       <h2>{isEdit ? "Edit Task" : "Create Task"}</h2>
 
