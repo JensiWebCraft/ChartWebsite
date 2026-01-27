@@ -158,3 +158,62 @@
   border-radius: 50%;
   cursor: pointer;
 }
+/* =========================
+   RESPONSIVE STYLES
+========================= */
+
+/* 🟡 Large Tablet */
+@media (max-width: 1200px) {
+  .create-task-wrapper {
+    width: 95%;
+  }
+}
+
+/* 🟠 Tablet */
+@media (max-width: 1024px) {
+  .task-form {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .field.full {
+    grid-column: span 2;
+  }
+}
+
+/* 🔴 Mobile */
+@media (max-width: 640px) {
+  .create-task-wrapper {
+    padding: 10px;
+  }
+
+  .task-form {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .field.full {
+    grid-column: span 1;
+  }
+
+  .actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .image-preview {
+    justify-content: center;
+  }
+
+  .image-preview img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .img-block img {
+    max-width: 100%;
+    height: auto;
+  }
+}

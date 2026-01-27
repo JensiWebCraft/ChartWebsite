@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { getTasks } from "../../utils/taskService";
 import "./TaskList.scss";
 import { FiEdit, FiTrash2, FiDownload } from "react-icons/fi";
@@ -7,9 +8,7 @@ import { useNavigate } from "react-router-dom";
 import TaskDetailsModal from "./TaskDetailsModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import BackButton from "../../components/BackButton/BackButton";
 
-/* ✅ ADD PENDING COLUMN */
 const STATUSES = ["pending", "inprogress", "completed", "failed"];
 
 const TaskList = () => {
@@ -23,18 +22,15 @@ const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [activeTask, setActiveTask] = useState(null);
 
-  const getAssignedUser = (email) => {
-    return users.find((u) => u.email === email);
-  };
+  const getAssignedUser = (email) => users.find((u) => u.email === email);
 
-  /* 🔹 LOAD TASKS */
+  /* LOAD TASKS */
   const loadData = () => {
     const all = getTasks();
     const visible =
       selectedUser === "all"
         ? all
         : all.filter((t) => t.assignedTo === selectedUser);
-
     setTasks(visible);
   };
 
@@ -44,72 +40,71 @@ const TaskList = () => {
     return () => window.removeEventListener("tasksUpdated", loadData);
   }, [selectedUser]);
 
-  /* 🔹 PERMISSION */
-  const canDragTask = (task) => {
-    if (user.role === "superadmin") return true;
-    return task.assignedTo === user.email;
-  };
+  /* PERMISSION */
+  const canDragTask = (task) =>
+    user.role === "superadmin" || task.assignedTo === user.email;
 
-  /* 🔹 DRAG START */
-  /* 🔹 DRAG START – make sure data is set and effect is allowed */
-  const onDragStart = (e, task) => {
-    if (!canDragTask(task)) return;
+  /* ✅ NPM DRAG END */
+  const onDragEnd = (result) => {
+    const { source, destination, draggableId } = result;
 
-    e.dataTransfer.setData("text/plain", task.id.toString());
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.dropEffect = "move";
-  };
+    if (!destination) return;
 
-  /* 🔹 Allow drop – must be on EVERY potential drop target */
-  const allowDrop = (e) => {
-    e.preventDefault(); // must call this
-    e.stopPropagation(); // sometimes helps
-    e.dataTransfer.dropEffect = "move"; // visual feedback
-  };
-
-  /* 🔹 DROP – add logging to debug */
-  const onDrop = (e, newStatus) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const taskIdRaw =
-      e.dataTransfer.getData("text/plain") || e.dataTransfer.getData("taskId");
-    const taskId = Number(taskIdRaw);
-
-    console.log(`[DROP] on ${newStatus} - taskId:`, taskId); // ← check console!
-
-    if (isNaN(taskId) || !taskId) {
-      console.warn("Invalid taskId from dataTransfer");
+    // same place → do nothing
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    ) {
       return;
     }
 
-    const all = getTasks();
-    const updated = all.map((t) =>
-      t.id === taskId ? { ...t, status: newStatus } : t,
+    const allTasks = [...getTasks()];
+
+    // dragged task
+    const movedTask = allTasks.find((t) => t.id.toString() === draggableId);
+
+    // remove from old position
+    const remaining = allTasks.filter((t) => t.id.toString() !== draggableId);
+
+    // tasks in destination column
+    const destinationTasks = remaining.filter(
+      (t) => t.status === destination.droppableId,
     );
 
+    // insert at new index
+    destinationTasks.splice(destination.index, 0, {
+      ...movedTask,
+      status: destination.droppableId,
+    });
+
+    // rebuild full list
+    const updated = [
+      ...remaining.filter((t) => t.status !== destination.droppableId),
+      ...destinationTasks,
+    ];
+
     localStorage.setItem("tasks", JSON.stringify(updated));
     window.dispatchEvent(new Event("tasksUpdated"));
 
-    toast.success(`Task moved to ${newStatus.toUpperCase()}`);
+    toast.success(`Task moved to ${destination.droppableId.toUpperCase()}`);
   };
 
-  /* 🔹 DELETE TASK */
   const handleDelete = (taskId) => {
-    if (!window.confirm("Delete this task?")) return;
-
-    const updated = getTasks().filter((t) => t.id !== taskId);
-    localStorage.setItem("tasks", JSON.stringify(updated));
-    window.dispatchEvent(new Event("tasksUpdated"));
-
-    toast.error("Task deleted");
+    toast.error("Task deleted", {
+      autoClose: 1500, // toast visible time
+      onClose: () => {
+        const updated = getTasks().filter((t) => t.id !== taskId);
+        localStorage.setItem("tasks", JSON.stringify(updated));
+        window.dispatchEvent(new Event("tasksUpdated"));
+      },
+    });
   };
 
   return (
     <div className="task-board">
       <ToastContainer position="top-right" autoClose={2000} />
 
-      {/* HEADER */}
+      {/* FILTER BAR (UNCHANGED) */}
       <div className="filter-bar">
         {user.role === "superadmin" && (
           <select
@@ -127,86 +122,95 @@ const TaskList = () => {
 
         <FiDownload
           className="csv-icon"
-          title="Download CSV"
           onClick={() => downloadCSV(tasks, "task-report.csv")}
         />
       </div>
 
-      {/* COLUMNS */}
-      <div className="columns">
-        {STATUSES.map((status) => {
-          const statusTasks = tasks.filter((t) => t.status === status);
+      {/* ✅ NPM DRAG CONTEXT */}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="columns">
+          {STATUSES.map((status) => (
+            <Droppable droppableId={status} key={status}>
+              {(provided) => (
+                <div
+                  className={`column ${status}`}
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                >
+                  <h4>
+                    {status === "inprogress"
+                      ? "In Progress"
+                      : status.charAt(0).toUpperCase() + status.slice(1)}
+                  </h4>
 
-          return (
-            <div
-              key={status}
-              className={`column ${status}`}
-              onDragEnter={(e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = "move";
-              }}
-              onDragOver={allowDrop}
-              onDrop={(e) => onDrop(e, status)}
-            >
-              <h4>
-                {status === "inprogress"
-                  ? "In Progress"
-                  : status.charAt(0).toUpperCase() + status.slice(1)}
-              </h4>
+                  {tasks
+                    .filter((t) => t.status === status)
+                    .map((task, index) => {
+                      const assignedUser = getAssignedUser(task.assignedTo);
 
-              {statusTasks.length === 0 && (
-                <p className="empty">Drop tasks here</p>
+                      return (
+                        <Draggable
+                          key={task.id}
+                          draggableId={task.id.toString()}
+                          index={index}
+                          isDragDisabled={!canDragTask(task)}
+                        >
+                          {(provided) => (
+                            <div
+                              className={`task-card ${
+                                canDragTask(task) ? "draggable" : "locked"
+                              }`}
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              onClick={() => setActiveTask(task)}
+                            >
+                              <h5>{task.title}</h5>
+
+                              {assignedUser && (
+                                <div className="assigned-info">
+                                  <span className="assigned-name">
+                                    {assignedUser.name}
+                                  </span>
+                                  <span
+                                    className={`role-badge ${assignedUser.role}`}
+                                  >
+                                    {assignedUser.role}
+                                  </span>
+                                </div>
+                              )}
+
+                              <div
+                                className="actions"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <FiEdit
+                                  onClick={() =>
+                                    navigate(`/tasks/edit/${task.id}`)
+                                  }
+                                />
+                                <FiTrash2
+                                  title="Delete"
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // 🔑 prevent card click
+                                    handleDelete(task.id);
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                    })}
+
+                  {provided.placeholder}
+                </div>
               )}
+            </Droppable>
+          ))}
+        </div>
+      </DragDropContext>
 
-              {statusTasks.map((task) => {
-                const assignedUser = getAssignedUser(task.assignedTo);
-
-                return (
-                  <div
-                    key={task.id}
-                    className={`task-card ${canDragTask(task) ? "draggable" : "locked"}`}
-                    draggable={canDragTask(task)}
-                    onDragStart={(e) => onDragStart(e, task)}
-                    onDragOver={allowDrop}
-                    onDrop={(e) => onDrop(e, task.status)}
-                    onClick={() => setActiveTask(task)}
-                  >
-                    <h5>{task.title}</h5>
-
-                    {/* ✅ ASSIGNED INFO */}
-                    {assignedUser && (
-                      <div className="assigned-info">
-                        <span className="assigned-name">
-                          {assignedUser.name}
-                        </span>
-                        <span className={`role-badge ${assignedUser.role}`}>
-                          {assignedUser.role}
-                        </span>
-                      </div>
-                    )}
-
-                    <div
-                      className="actions"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <FiEdit
-                        title="Edit"
-                        onClick={() => navigate(`/tasks/edit/${task.id}`)}
-                      />
-                      <FiTrash2
-                        title="Delete"
-                        onClick={() => handleDelete(task.id)}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* MODAL */}
       {activeTask && (
         <TaskDetailsModal
           task={activeTask}

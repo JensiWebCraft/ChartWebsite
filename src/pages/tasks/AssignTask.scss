@@ -69,3 +69,63 @@
     }
   }
 }
+/* =========================
+   RESPONSIVE STYLES
+========================= */
+
+/* 🟡 Large screens */
+@media (max-width: 1200px) {
+  .assign-page {
+    width: 95%;
+  }
+}
+
+/* 🟠 Tablets */
+@media (max-width: 1024px) {
+  .assign-page {
+    padding: 10px;
+  }
+
+  .assign-grid {
+    gap: 20px;
+  }
+
+  .assign-card {
+    padding: 18px;
+  }
+}
+
+/* 🔴 Mobile */
+@media (max-width: 640px) {
+  .assign-page {
+    width: 100%;
+    padding: 8px;
+  }
+
+  .assign-page h2 {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .assign-grid {
+    grid-template-columns: 1fr; /* single column */
+    gap: 16px;
+  }
+
+  .assign-card {
+    padding: 16px;
+  }
+
+  .assign-card h4 {
+    font-size: 15px;
+  }
+
+  .assign-card p {
+    font-size: 12px;
+  }
+
+  .assign-card select {
+    font-size: 14px;
+    padding: 12px;
+  }
+}

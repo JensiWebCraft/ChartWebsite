@@ -3,7 +3,7 @@
   padding: 24px;
   background: linear-gradient(180deg, #f8fafc, #eef2ff);
   min-height: 100vh;
-  width: 1200px;
+  max-width: 1200px;
   margin: auto;
 }
 
@@ -12,90 +12,62 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-
   padding: 14px 20px;
   margin-bottom: 24px;
-
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
 
-  h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #111827;
-  }
-
-  select {
-    padding: 6px 12px;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    font-size: 14px;
-    background: #f9fafb;
-    cursor: pointer;
-  }
+.filter-bar select {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
 }
 
 /* ================= COLUMNS ================= */
 .columns {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 🔥 MUST BE 4 */
-  gap: 1rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
 }
 
 /* ================= COLUMN ================= */
 .column {
-  background: #ffffff;
+  background: #f1f5f9;
   border-radius: 16px;
   padding: 16px;
-  min-height: 480px;
-
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+  min-height: 520px; /* 🔥 REQUIRED FOR DROP */
   display: flex;
   flex-direction: column;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+}
 
-  h4 {
-    text-align: center;
-    margin-bottom: 16px;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.4px;
-  }
+.column h4 {
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 /* STATUS COLORS */
-.column.inprogress {
-  border-top: 6px solid #3b82f6;
-  h4 {
-    color: #2563eb;
-  }
-}
-
-.column.completed {
-  border-top: 6px solid #22c55e;
-  h4 {
-    color: #15803d;
-  }
-}
-
-.column.failed {
-  border-top: 6px solid #ef4444;
-  h4 {
-    color: #b91c1c;
-  }
-}
-
 .column.pending {
   border-top: 6px solid orange;
-  h4 {
-    color: orange;
-  }
+}
+.column.inprogress {
+  border-top: 6px solid #3b82f6;
+}
+.column.completed {
+  border-top: 6px solid #22c55e;
+}
+.column.failed {
+  border-top: 6px solid #ef4444;
 }
 
 /* ================= TASK CARD ================= */
 .task-card {
-  background: #f9fafb;
+  background: #ffffff;
   border-radius: 12px;
   padding: 12px;
   margin-bottom: 14px;
@@ -104,59 +76,57 @@
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
-  }
-
-  h5 {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: #111827;
-  }
-
-  p {
-    font-size: 13px;
-    color: #4b5563;
-    margin-bottom: 6px;
-  }
 }
 
-/* ================= ACTION ICONS ================= */
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.task-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.task-card h5 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* ================= ASSIGNED USER ================= */
+.assigned-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.role-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgb(97, 97, 230);
+  color: wheat;
+}
+
+/* ================= ACTIONS ================= */
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 6px;
-
-  svg {
-    font-size: 16px;
-    cursor: pointer;
-    transition:
-      transform 0.15s ease,
-      color 0.15s ease;
-  }
-
-  svg:hover {
-    transform: scale(1.15);
-  }
-
-  svg[title="Edit"] {
-    color: #2563eb;
-  }
-
-  svg[title="Delete"] {
-    color: #dc2626;
-  }
 }
 
-/* ================= EMPTY STATE ================= */
+.actions svg {
+  cursor: pointer;
+}
+
+/* ================= EMPTY ================= */
 .empty {
   text-align: center;
   color: #9ca3af;
-  font-size: 14px;
   margin-top: 40px;
 }
 
@@ -165,89 +135,6 @@
   font-size: 22px;
   color: #16a34a;
   cursor: pointer;
-  transition:
-    transform 0.15s ease,
-    color 0.15s ease;
-
-  &:hover {
-    color: #15803d;
-    transform: scale(1.15);
-  }
-}
-.columns {
-  display: flex;
-  gap: 16px;
-}
-
-.column {
-  flex: 1;
-  min-height: 320px; // 🔴 REQUIRED FOR DROP
-  background: #f1f5f9;
-  padding: 12px;
-  border-radius: 12px;
-}
-
-.column h4 {
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-.task-card {
-  background: white;
-  border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 10px;
-  cursor: pointer;
-}
-
-// .task-card.draggable {
-//   cursor: grab;
-// }
-
-.task-card.locked {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.empty {
-  text-align: center;
-  color: #94a3b8;
-}
-.assigned-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 6px;
-  font-size: 12px;
-}
-
-.assigned-name {
-  color: #374151;
-  font-weight: 500;
-}
-
-.role-badge {
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-/* ROLE COLORS */
-.role-badge.user {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-
-.role-badge.admin {
-  background: #ede9fe;
-  color: #5b21b6;
-}
-
-.role-badge.superadmin {
-  background: #fee2e2;
-  color: #991b1b;
 }
 
 /* ================= RESPONSIVE ================= */
