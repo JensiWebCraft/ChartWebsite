@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { applyTheme } from "../utils/applyTheme";
+
 import "./Login.scss";
-import { toast } from "react-toastify";
 
 function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState("");

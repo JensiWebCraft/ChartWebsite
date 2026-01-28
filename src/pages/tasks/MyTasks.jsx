@@ -65,11 +65,11 @@ const MyTasks = () => {
 
           <div className="actions">
             <button onClick={() => updateStatus(task.id, "inprogress")}>
-              Start
+              Inprogress
             </button>
 
-            <button onClick={() => updateStatus(task.id, "updated")}>
-              Update
+            <button onClick={() => updateStatus(task.id, "pending")}>
+              Pending
             </button>
 
             <button

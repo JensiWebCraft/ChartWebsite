@@ -23,7 +23,7 @@ function App() {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("activeUser"));
     if (user) {
-      applyTheme(user.theme, user.role);
+      applyTheme(user); // ✅ APPLY USER THEME
       setAuthStage("app");
     }
   }, []);

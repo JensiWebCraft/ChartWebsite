@@ -28,7 +28,6 @@ const TrendChart = ({ tasks }) => {
   const statusCount = {
     pending: 0,
     inprogress: 0,
-    updated: 0,
     completed: 0,
     failed: 0,
   };

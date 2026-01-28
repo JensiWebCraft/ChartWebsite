@@ -8,6 +8,7 @@ import "./Analysis.scss";
 
 const Analysis = () => {
   const user = JSON.parse(localStorage.getItem("activeUser"));
+  const [allTasks, setAllTasks] = useState([]);
 
   if (!user) {
     return <p style={{ padding: "20px" }}>Please login again</p>;
@@ -25,6 +26,8 @@ const Analysis = () => {
           ? t.assignedTo.email
           : t.assignedTo,
     }));
+
+    setAllTasks(normalized);
 
     const visible =
       user.role === "superadmin"
@@ -54,7 +57,7 @@ const Analysis = () => {
 
       <div className="chart-row">
         <StatusDonut tasks={tasks} />
-        {user.role !== "user" && <UserBarChart tasks={tasks} />}
+        <UserBarChart tasks={user.role === "user" ? allTasks : tasks} />
       </div>
 
       <TrendChart tasks={tasks} />

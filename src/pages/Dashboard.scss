@@ -3,6 +3,7 @@
   padding: 30px;
   overflow-y: auto;
   background: #f8fafc;
+  color: var(--text-main);
 }
 
 /* ================= HERO ================= */
@@ -94,6 +95,7 @@
 
 .card:hover {
   transform: translateY(-6px);
+  background: var(--secondary);
 }
 
 .blue {
@@ -101,7 +103,7 @@
 }
 
 .green {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+  background: linear-gradient(135deg, #47e10a, #09da10);
 }
 
 .orange {
@@ -128,16 +130,18 @@
 
 .analytics-content {
   animation: fadeUp 0.7s ease;
+  color: var(--text-main);
 }
 
 .analytics-content h2 {
   font-size: 30px;
   margin-bottom: 14px;
+  color: var(--text-main);
 }
 
 .analytics-content p {
-  color: #555;
   margin-bottom: 14px;
+  color: var(--text-main);
 }
 
 .analytics-content ul {
@@ -213,7 +217,7 @@
 }
 
 .tool-card {
-  background: #ffffff;
+  background: var(--primary);
   padding: 18px;
   border-radius: 16px;
   font-size: 16px;
@@ -225,8 +229,8 @@
 }
 
 .tool-card:hover {
-  background: #111827;
-  color: #ffffff;
+  background: var(--secondary);
+  color: var(--text-main);
   transform: translateY(-6px);
 }
 
