@@ -1,216 +1,187 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { getTasks } from "../../utils/taskService";
-import "./TaskList.scss";
 import { FiEdit, FiTrash2, FiDownload } from "react-icons/fi";
-import { downloadCSV } from "../../utils/csvExport";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchTasks, updateTask, deleteTask } from "../../store/taskSlice";
 import { useNavigate } from "react-router-dom";
 import TaskDetailsModal from "./TaskDetailsModal";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import "./TaskList.scss";
 
 const STATUSES = ["pending", "inprogress", "completed", "failed"];
 
 const TaskList = () => {
-  const user = JSON.parse(localStorage.getItem("activeUser"));
-  const users = JSON.parse(localStorage.getItem("users_list")) || [];
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const fetched = useRef(false);
+
+  const { tasks = [], loading } = useSelector((state) => state.tasks);
+
+  /* 🔐 Safe localStorage parsing */
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("activeUser")) || {};
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const users = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("users_list")) || [];
+    } catch {
+      return [];
+    }
+  }, []);
 
   const [selectedUser, setSelectedUser] = useState(
     user.role === "superadmin" ? "all" : user.email,
   );
-  const [tasks, setTasks] = useState([]);
   const [activeTask, setActiveTask] = useState(null);
 
-  const getAssignedUser = (email) => users.find((u) => u.email === email);
-
-  /* LOAD TASKS */
-  const loadData = () => {
-    const all = getTasks();
-    const visible =
-      selectedUser === "all"
-        ? all
-        : all.filter((t) => t.assignedTo === selectedUser);
-    setTasks(visible);
-  };
-
+  /* 🔐 Prevent double API call */
   useEffect(() => {
-    loadData();
-    window.addEventListener("tasksUpdated", loadData);
-    return () => window.removeEventListener("tasksUpdated", loadData);
-  }, [selectedUser]);
+    if (fetched.current) return;
+    fetched.current = true;
+    dispatch(fetchTasks());
+  }, [dispatch]);
 
-  /* PERMISSION */
-  const canDragTask = (task) =>
+  /* ✅ Memoized filtering */
+  const visibleTasks = useMemo(() => {
+    if (selectedUser === "all") return tasks;
+    return tasks.filter((t) => t.assignedTo === selectedUser);
+  }, [tasks, selectedUser]);
+
+  const canDrag = (task) =>
     user.role === "superadmin" || task.assignedTo === user.email;
 
-  /* ✅ NPM DRAG END */
   const onDragEnd = (result) => {
-    const { source, destination, draggableId } = result;
+    if (!result.destination) return;
 
-    if (!destination) return;
+    dispatch(
+      updateTask({
+        id: result.draggableId,
+        data: { status: result.destination.droppableId },
+      }),
+    );
+  };
 
-    // same place → do nothing
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    ) {
-      return;
+  const handleDelete = (id) => {
+    if (window.confirm("Delete this task?")) {
+      dispatch(deleteTask(id));
     }
+  };
 
-    const allTasks = [...getTasks()];
+  /* ✅ CSV Export */
+  const downloadCSV = () => {
+    const header = "ID,Title,Status,Priority,Assigned\n";
 
-    // dragged task
-    const movedTask = allTasks.find((t) => t.id.toString() === draggableId);
-
-    // remove from old position
-    const remaining = allTasks.filter((t) => t.id.toString() !== draggableId);
-
-    // tasks in destination column
-    const destinationTasks = remaining.filter(
-      (t) => t.status === destination.droppableId,
+    const rows = tasks.map(
+      (t) =>
+        `"${t.id}","${t.title}","${t.status}","${t.priority}","${t.assignedTo}"`,
     );
 
-    // insert at new index
-    destinationTasks.splice(destination.index, 0, {
-      ...movedTask,
-      status: destination.droppableId,
+    const blob = new Blob([header + rows.join("\n")], {
+      type: "text/csv",
     });
 
-    // rebuild full list
-    const updated = [
-      ...remaining.filter((t) => t.status !== destination.droppableId),
-      ...destinationTasks,
-    ];
-
-    localStorage.setItem("tasks", JSON.stringify(updated));
-    window.dispatchEvent(new Event("tasksUpdated"));
-
-    toast.success(`Task moved to ${destination.droppableId.toUpperCase()}`);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "tasks.csv";
+    a.click();
   };
 
-  const handleDelete = (taskId) => {
-    toast.error("Task deleted", {
-      autoClose: 1500, // toast visible time
-      onClose: () => {
-        const updated = getTasks().filter((t) => t.id !== taskId);
-        localStorage.setItem("tasks", JSON.stringify(updated));
-        window.dispatchEvent(new Event("tasksUpdated"));
-      },
-    });
-  };
+  if (loading) return <p className="loading">Loading...</p>;
 
   return (
     <div className="task-board">
-      <ToastContainer position="top-right" autoClose={2000} />
-
-      {/* FILTER BAR (UNCHANGED) */}
+      {/* ================= FILTER BAR ================= */}
       <div className="filter-bar">
         {user.role === "superadmin" && (
           <select
             value={selectedUser}
             onChange={(e) => setSelectedUser(e.target.value)}
           >
-            <option value="all">All Users</option>
+            <option value="all">All</option>
             {users.map((u) => (
               <option key={u.email} value={u.email}>
-                {u.name}
+                {u.name || u.email}
               </option>
             ))}
           </select>
         )}
 
-        <FiDownload
-          className="csv-icon"
-          onClick={() => downloadCSV(tasks, "task-report.csv")}
-        />
+        <FiDownload className="csv-icon" onClick={downloadCSV} />
       </div>
 
-      {/* ✅ NPM DRAG CONTEXT */}
+      {/* ================= BOARD ================= */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="columns">
-          {STATUSES.map((status) => (
-            <Droppable droppableId={status} key={status}>
-              {(provided) => (
-                <div
-                  className={`column ${status}`}
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                >
-                  <h4>
-                    {status === "inprogress"
-                      ? "In Progress"
-                      : status.charAt(0).toUpperCase() + status.slice(1)}
-                  </h4>
+          {STATUSES.map((status) => {
+            const tasksByStatus = visibleTasks.filter(
+              (t) => t.status === status,
+            );
 
-                  {tasks
-                    .filter((t) => t.status === status)
-                    .map((task, index) => {
-                      const assignedUser = getAssignedUser(task.assignedTo);
+            return (
+              <Droppable key={status} droppableId={status}>
+                {(dropProvided) => (
+                  <div
+                    ref={dropProvided.innerRef}
+                    {...dropProvided.droppableProps}
+                    className={`column ${status}`}
+                  >
+                    <h4>
+                      {status} ({tasksByStatus.length})
+                    </h4>
 
-                      return (
-                        <Draggable
-                          key={task.id}
-                          draggableId={task.id.toString()}
-                          index={index}
-                          isDragDisabled={!canDragTask(task)}
-                        >
-                          {(provided) => (
-                            <div
-                              className={`task-card ${
-                                canDragTask(task) ? "draggable" : "locked"
-                              }`}
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              onClick={() => setActiveTask(task)}
-                            >
-                              <h5>{task.title}</h5>
+                    {tasksByStatus.map((task, index) => (
+                      <Draggable
+                        key={task.id}
+                        draggableId={task.id.toString()}
+                        index={index}
+                        isDragDisabled={!canDrag(task)}
+                      >
+                        {(dragProvided) => (
+                          <div
+                            ref={dragProvided.innerRef}
+                            {...dragProvided.draggableProps}
+                            {...dragProvided.dragHandleProps}
+                            className={`task-card ${
+                              !canDrag(task) ? "locked" : ""
+                            }`}
+                            onClick={() => setActiveTask(task)}
+                          >
+                            <h5>{task.title}</h5>
 
-                              {assignedUser && (
-                                <div className="assigned-info">
-                                  <span className="assigned-name">
-                                    {assignedUser.name}
-                                  </span>
-                                  <span
-                                    className={`role-badge ${assignedUser.role}`}
-                                  >
-                                    {assignedUser.role}
-                                  </span>
-                                </div>
-                              )}
+                            <div className="actions">
+                              <FiEdit
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/tasks/edit/${task.id}`);
+                                }}
+                              />
 
-                              <div
-                                className="actions"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <FiEdit
-                                  onClick={() =>
-                                    navigate(`/tasks/edit/${task.id}`)
-                                  }
-                                />
-                                <FiTrash2
-                                  title="Delete"
-                                  onClick={(e) => {
-                                    e.stopPropagation(); // 🔑 prevent card click
-                                    handleDelete(task.id);
-                                  }}
-                                />
-                              </div>
+                              <FiTrash2
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(task.id);
+                                }}
+                              />
                             </div>
-                          )}
-                        </Draggable>
-                      );
-                    })}
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
 
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          ))}
+                    {dropProvided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            );
+          })}
         </div>
       </DragDropContext>
 
+      {/* ================= MODAL ================= */}
       {activeTask && (
         <TaskDetailsModal
           task={activeTask}

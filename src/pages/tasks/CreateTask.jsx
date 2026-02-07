@@ -1,48 +1,72 @@
+// src/components/CreateTask.jsx
 import { useEffect, useState, useRef } from "react";
-import { getTasks, saveTasks, getTaskById } from "../../utils/taskService";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "./CreateTask.scss";
+import { useDispatch, useSelector } from "react-redux";
+import { createTask, updateTask, fetchTasks } from "../../store/taskSlice";
 import BackButton from "../../components/BackButton/BackButton";
 import TaskComments from "../../components/comments/TaskComments";
+import "./CreateTask.scss";
 
 const initialForm = {
   title: "",
   description: "",
   priority: "High",
   status: "pending",
-  assignTo: "",
+  assignedTo: "", // ← confirm this matches your MockAPI field exactly
   startDate: "",
   dueDate: "",
 };
 
 const CreateTask = () => {
-  const [form, setForm] = useState(initialForm);
-  const [errors, setErrors] = useState({}); // errors object for each field
-  const [comments, setComments] = useState([]);
-
-  const editorRef = useRef(null);
-  const { id } = useParams();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { id } = useParams();
   const isEdit = Boolean(id);
+
+  const { tasks, loading: tasksLoading } = useSelector((state) => state.tasks);
+
+  const [form, setForm] = useState(initialForm);
+  const [errors, setErrors] = useState({});
+  const [comments, setComments] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [newComment, setNewComment] = useState([]);
+  const editorRef = useRef(null);
 
   const user = JSON.parse(localStorage.getItem("activeUser")) || {
     email: "anonymous@example.com",
     role: "user",
   };
 
-  // Load task only when editing
+  const users = JSON.parse(localStorage.getItem("users_list")) || [];
+  // Load task data when editing
   useEffect(() => {
+    console.log("tasks", tasks);
+    const A = tasks.filter((t) => {
+      return t?.comments?.length > 0;
+    });
+    console.log(A);
+    setNewComment(A);
     if (!isEdit) {
+      setForm(initialForm);
       setComments([]);
       return;
     }
 
-    const task = getTaskById(id);
+    if (tasks.length === 0 && !tasksLoading) {
+      dispatch(fetchTasks());
+    }
+
+    // Safer ID comparison (string vs string)
+    const task = tasks.find((t) => String(t.id) === String(id));
+
     if (!task) {
-      toast.error("Task not found");
-      navigate("/tasks/list");
+      // Wait for loading to finish before showing error
+      if (!tasksLoading) {
+        toast.error("Task not found");
+        navigate("/tasks/list");
+      }
       return;
     }
 
@@ -51,29 +75,28 @@ const CreateTask = () => {
       description: task.description || "",
       priority: task.priority || "High",
       status: task.status || "pending",
-      assignTo: task.assignTo || task.assignedTo || "",
+      assignedTo: task.assignedTo || task.assignTo || "", // handles both spellings
       startDate: task.startDate || "",
       dueDate: task.dueDate || "",
     });
 
-    setComments(task.comments || []);
+    // Always make comments an array
+    setComments(Array.isArray(task.comments) ? task.comments : []);
 
     setTimeout(() => {
       if (editorRef.current) {
         editorRef.current.innerHTML = task.description || "";
       }
-    }, 0);
-  }, [id, isEdit, navigate]);
+    }, 100);
+  }, [id, isEdit, navigate, tasks, dispatch, tasksLoading]);
 
-  // Real-time validation when form changes
   const validateField = (name, value) => {
     let error = "";
-
     switch (name) {
       case "title":
         if (!value.trim()) error = "Title is required";
-        else if (value.trim().length < 3)
-          error = "Title must be at least 3 characters";
+        else if (value.trim().length < 5)
+          error = "Title must be at least 5 characters";
         break;
       case "startDate":
         if (!value) error = "Start date is required";
@@ -86,29 +109,20 @@ const CreateTask = () => {
       default:
         break;
     }
-
     return error;
   };
 
-  // Validate description separately (rich text)
-  const validateDescription = () => {
-    if (!editorRef.current?.innerText.trim()) {
-      return "Description is required";
-    }
-    return "";
-  };
+  const validateDescription = () =>
+    editorRef.current?.innerText.trim() ? "" : "Description is required";
 
-  // Update errors on change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
 
-    // Validate the changed field
     const error = validateField(name, value);
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
-  // Validate description on input
   const handleEditorInput = () => {
     const descError = validateDescription();
     setErrors((prev) => ({ ...prev, description: descError }));
@@ -145,19 +159,14 @@ const CreateTask = () => {
       "beforeend",
       `
       <div class="img-block" contenteditable="false">
-        <img src="${src}" />
+        <img src="${src}" alt="Uploaded" />
         <button class="remove-img" data-remove>×</button>
       </div>
       <p><br/></p>
     `,
     );
-    setForm((prev) => ({
-      ...prev,
-      description: editorRef.current.innerHTML,
-    }));
-    // Re-validate description after image add
-    const descError = validateDescription();
-    setErrors((prev) => ({ ...prev, description: descError }));
+    setForm((prev) => ({ ...prev, description: editorRef.current.innerHTML }));
+    setErrors((prev) => ({ ...prev, description: validateDescription() }));
   };
 
   const handlePaste = async (e) => {
@@ -190,108 +199,94 @@ const CreateTask = () => {
     const editor = editorRef.current;
     if (!editor) return;
 
-    const handler = (e) => {
+    const removeHandler = (e) => {
       if (e.target.dataset.remove !== undefined) {
         e.target.closest(".img-block")?.remove();
         setForm((prev) => ({
           ...prev,
           description: editor.innerHTML,
         }));
-        const descError = validateDescription();
-        setErrors((prev) => ({ ...prev, description: descError }));
+        setErrors((prev) => ({ ...prev, description: validateDescription() }));
       }
     };
 
-    editor.addEventListener("click", handler);
-    return () => editor.removeEventListener("click", handler);
+    editor.addEventListener("click", removeHandler);
+    return () => editor.removeEventListener("click", removeHandler);
   }, []);
 
-  // Full form validation before submit
   const validateForm = () => {
-    const newErrors = {};
-
-    newErrors.title = validateField("title", form.title);
-    newErrors.startDate = validateField("startDate", form.startDate);
-    newErrors.dueDate = validateField("dueDate", form.dueDate);
-    newErrors.description = validateDescription();
-
+    const newErrors = {
+      title: validateField("title", form.title),
+      startDate: validateField("startDate", form.startDate),
+      dueDate: validateField("dueDate", form.dueDate),
+      description: validateDescription(),
+    };
     setErrors(newErrors);
-
     return Object.values(newErrors).every((err) => !err);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) {
       toast.error("Please fix the errors in the form");
       return;
     }
 
-    const currentDescription = editorRef.current?.innerHTML || form.description;
+    setSubmitting(true);
 
-    const taskData = {
+    const taskPayload = {
       ...form,
-      description: currentDescription,
-      assignTo: form.assignTo.trim(),
-      comments,
+      description: editorRef.current?.innerHTML || "",
+      assignedTo: form.assignedTo || null, // allow unassigned
+      createdBy: user.email,
+      // Critical: Do NOT send createdAt on update!
+      createdAt: isEdit ? undefined : new Date().toISOString(),
+      comments: Array.isArray(comments) ? comments : [],
     };
 
-    const allTasks = getTasks();
+    try {
+      if (isEdit) {
+        await dispatch(updateTask({ id, data: taskPayload })).unwrap();
+        toast.success("Task updated successfully!");
+      } else {
+        await dispatch(createTask(taskPayload)).unwrap();
+        toast.success("Task created successfully!");
+      }
 
-    if (isEdit) {
-      saveTasks(
-        allTasks.map((t) =>
-          t.id === Number(id)
-            ? { ...t, ...taskData, updatedAt: new Date().toISOString() }
-            : t,
-        ),
-      );
-      toast.success("Task updated successfully");
-    } else {
-      saveTasks([
-        ...allTasks,
-        {
-          id: Date.now(),
-          ...taskData,
-          createdBy: user.email,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
-      toast.success("Task created successfully");
+      setTimeout(() => navigate("/tasks/list"), 1800);
+    } catch (err) {
+      console.error("Task save failed:", err);
+      toast.error("Failed to save task: " + (err.message || "Unknown error"));
+    } finally {
+      setSubmitting(false);
     }
-
-    setTimeout(() => navigate("/tasks/list"), 1500);
   };
 
   const handleNewComment = (newComment) => {
-    setComments((prev) => [...prev, newComment]);
+    const updatedComments = Array.isArray(comments)
+      ? [...comments, newComment]
+      : [newComment];
 
-    // Save immediately
-    const allTasks = getTasks();
+    setComments(updatedComments);
 
     if (isEdit) {
-      const updatedTasks = allTasks.map((t) =>
-        t.id === Number(id)
-          ? { ...t, comments: [...(t.comments || []), newComment] }
-          : t,
+      dispatch(
+        updateTask({
+          id,
+          data: {
+            ...form,
+            description: editorRef.current?.innerHTML || "",
+            comments: updatedComments,
+          },
+        }),
       );
-      saveTasks(updatedTasks);
-    } else {
-      // Create mode - save as real task
-      const taskData = {
-        id: Date.now(),
-        ...form,
-        description: editorRef.current?.innerHTML || form.description,
-        assignTo: form.assignTo.trim(),
-        comments: [...comments, newComment],
-        createdBy: user.email,
-        createdAt: new Date().toISOString(),
-      };
-
-      saveTasks([...allTasks, taskData]);
     }
 
     toast.success("Comment added");
   };
+
+  if (isEdit && (tasksLoading || !tasks.some((t) => String(t.id) === id))) {
+    return <div className="loading">Loading task...</div>;
+  }
 
   return (
     <div className="create-task-wrapper">
@@ -301,6 +296,7 @@ const CreateTask = () => {
       <h2>{isEdit ? "Edit Task" : "Create Task"}</h2>
 
       <div className="task-form">
+        {/* Title */}
         <div className="field">
           <label>Title *</label>
           <input
@@ -312,6 +308,7 @@ const CreateTask = () => {
           {errors.title && <span className="error">{errors.title}</span>}
         </div>
 
+        {/* Status */}
         <div className="field">
           <label>Status</label>
           <select name="status" value={form.status} onChange={handleChange}>
@@ -322,6 +319,7 @@ const CreateTask = () => {
           </select>
         </div>
 
+        {/* Priority */}
         <div className="field">
           <label>Priority</label>
           <select name="priority" value={form.priority} onChange={handleChange}>
@@ -331,6 +329,7 @@ const CreateTask = () => {
           </select>
         </div>
 
+        {/* Description */}
         <div className="field full">
           <label>Description *</label>
           <div
@@ -347,6 +346,7 @@ const CreateTask = () => {
           )}
         </div>
 
+        {/* Dates */}
         <div className="field">
           <label>Start Date *</label>
           <input
@@ -370,20 +370,47 @@ const CreateTask = () => {
           />
           {errors.dueDate && <span className="error">{errors.dueDate}</span>}
         </div>
+
+        {/* Assign To - populated with users */}
+        <div className="field">
+          <label>Assign To</label>
+          <select
+            name="assignedTo"
+            value={form.assignedTo}
+            onChange={handleChange}
+          >
+            <option value="">Unassigned</option>
+            {users
+              .filter((u) => u.role === "user")
+              .map((u) => (
+                <option key={u.email} value={u.email}>
+                  {u.name || u.email}
+                </option>
+              ))}
+          </select>
+        </div>
       </div>
 
-      {/* Comments box – visible on both create and edit */}
       <TaskComments
         comments={comments}
+        newComments={newComment}
         currentUser={user}
         onSave={handleNewComment}
       />
 
       <div className="actions">
-        <button className="submit" onClick={handleSubmit}>
-          {isEdit ? "UPDATE" : "CREATE"}
+        <button
+          className="submit"
+          onClick={handleSubmit}
+          disabled={submitting || Object.values(errors).some((e) => e)}
+        >
+          {submitting ? "Saving..." : isEdit ? "UPDATE" : "CREATE"}
         </button>
-        <button className="cancel" onClick={() => navigate("/tasks/list")}>
+        <button
+          className="cancel"
+          onClick={() => navigate("/tasks/list")}
+          disabled={submitting}
+        >
           CANCEL
         </button>
       </div>

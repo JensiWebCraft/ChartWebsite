@@ -5,10 +5,18 @@ import FusionTheme from "fusioncharts/themes/fusioncharts.theme.fusion";
 import CandyTheme from "fusioncharts/themes/fusioncharts.theme.candy";
 import UmberTheme from "fusioncharts/themes/fusioncharts.theme.umber";
 import ReactFC from "react-fusioncharts";
+import ExcelExport from "fusioncharts/fusioncharts.excelexport";
 import { FiMoreVertical } from "react-icons/fi";
 import "./TrendChart.scss";
 
-ReactFC.fcRoot(FusionCharts, Charts, FusionTheme, CandyTheme, UmberTheme);
+ReactFC.fcRoot(
+  FusionCharts,
+  Charts,
+  FusionTheme,
+  CandyTheme,
+  UmberTheme,
+  ExcelExport,
+);
 
 /* 🔹 BUILT-IN FUSION THEMES */
 const THEMES = {

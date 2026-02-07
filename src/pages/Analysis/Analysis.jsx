@@ -1,66 +1,113 @@
-import { useEffect, useState } from "react";
-import { getTasks } from "../../utils/taskService";
+import { useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchTasks } from "../../store/taskSlice";
+
 import KpiCards from "./KpiCards";
 import StatusDonut from "./StatusDonut";
 import UserBarChart from "./UserBarChart";
 import TrendChart from "./TrendChart";
+
 import "./Analysis.scss";
 
 const Analysis = () => {
-  const user = JSON.parse(localStorage.getItem("activeUser"));
-  const [allTasks, setAllTasks] = useState([]);
+  const dispatch = useDispatch();
 
-  if (!user) {
-    return <p style={{ padding: "20px" }}>Please login again</p>;
-  }
+  const { tasks = [], loading, error } = useSelector((state) => state.tasks);
 
-  const [tasks, setTasks] = useState([]);
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("activeUser"));
+    } catch {
+      return null;
+    }
+  }, []);
 
-  const loadData = () => {
-    const all = getTasks();
+  // 🔹 Fetch tasks once user exists
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchTasks());
+    }
+  }, [dispatch, user]);
 
-    const normalized = all.map((t) => ({
+  // 🔹 Filter tasks based on role (MEMOIZED)
+  const visibleTasks = useMemo(() => {
+    if (!user || tasks.length === 0) return [];
+
+    switch (user.role) {
+      case "superadmin":
+        return tasks;
+
+      case "admin":
+        return tasks.filter((t) => t.createdBy === user.email);
+
+      default:
+        return tasks.filter((t) => t.assignedTo === user.email);
+    }
+  }, [tasks, user]);
+
+  // 🔹 Normalize data once (MEMOIZED)
+  const normalizedTasks = useMemo(() => {
+    return visibleTasks.map((t) => ({
       ...t,
       assignedTo:
         t.assignedTo && typeof t.assignedTo === "object"
           ? t.assignedTo.email
-          : t.assignedTo,
+          : t.assignedTo || "Unassigned",
     }));
+  }, [visibleTasks]);
 
-    setAllTasks(normalized);
+  // 🔹 Guards
+  if (!user) {
+    return (
+      <div className="analysis-page">
+        <p
+          style={{
+            padding: "2rem",
+            textAlign: "center",
+            color: "#e53e3e",
+          }}
+        >
+          Please login to view analytics.
+        </p>
+      </div>
+    );
+  }
 
-    const visible =
-      user.role === "superadmin"
-        ? normalized
-        : user.role === "admin"
-          ? normalized.filter((t) => t.createdBy === user.email)
-          : normalized.filter((t) => t.assignedTo === user.email);
+  if (loading) {
+    return (
+      <div className="analysis-page">
+        <div className="loading">Loading analytics...</div>
+      </div>
+    );
+  }
 
-    setTasks(visible);
-  };
-
-  useEffect(() => {
-    loadData();
-
-    const refresh = () => loadData();
-
-    window.addEventListener("tasksUpdated", refresh);
-
-    return () => {
-      window.removeEventListener("tasksUpdated", refresh);
-    };
-  }, []);
+  if (error) {
+    return (
+      <div className="analysis-page">
+        <p
+          style={{
+            color: "#e53e3e",
+            padding: "2rem",
+          }}
+        >
+          Failed to load tasks: {error}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="analysis-page">
-      <KpiCards tasks={tasks} />
+      <KpiCards tasks={normalizedTasks} />
 
       <div className="chart-row">
-        <StatusDonut tasks={tasks} />
-        <UserBarChart tasks={user.role === "user" ? allTasks : tasks} />
+        <StatusDonut tasks={normalizedTasks} />
+        <UserBarChart
+          tasks={user.role === "user" ? normalizedTasks : visibleTasks}
+        />
       </div>
 
-      <TrendChart tasks={tasks} />
+      <TrendChart tasks={normalizedTasks} />
     </div>
   );
 };

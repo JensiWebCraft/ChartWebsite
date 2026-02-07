@@ -4,11 +4,19 @@ import Charts from "fusioncharts/fusioncharts.charts";
 import FusionTheme from "fusioncharts/themes/fusioncharts.theme.fusion";
 import CandyTheme from "fusioncharts/themes/fusioncharts.theme.candy";
 import UmberTheme from "fusioncharts/themes/fusioncharts.theme.umber";
+import ExcelExport from "fusioncharts/fusioncharts.excelexport";
 import ReactFC from "react-fusioncharts";
 import { FiMoreVertical } from "react-icons/fi";
 import "./UserBarChart.scss";
 
-ReactFC.fcRoot(FusionCharts, Charts, FusionTheme, CandyTheme, UmberTheme);
+ReactFC.fcRoot(
+  FusionCharts,
+  Charts,
+  FusionTheme,
+  CandyTheme,
+  UmberTheme,
+  ExcelExport,
+);
 
 /* 🔹 BUILT-IN THEMES (LIKE `theme: "candy"`) */
 const THEMES = {
