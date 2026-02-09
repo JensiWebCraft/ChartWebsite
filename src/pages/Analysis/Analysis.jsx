@@ -38,7 +38,7 @@ const Analysis = () => {
         return tasks;
 
       case "admin":
-        return tasks.filter((t) => t.createdBy === user.email);
+        return tasks;
 
       default:
         return tasks.filter((t) => t.assignedTo === user.email);

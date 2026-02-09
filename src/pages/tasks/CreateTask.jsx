@@ -296,7 +296,7 @@ const CreateTask = () => {
       <h2>{isEdit ? "Edit Task" : "Create Task"}</h2>
 
       <div className="task-form">
-        {/* Title */}
+      
         <div className="field">
           <label>Title *</label>
           <input
@@ -308,7 +308,6 @@ const CreateTask = () => {
           {errors.title && <span className="error">{errors.title}</span>}
         </div>
 
-        {/* Status */}
         <div className="field">
           <label>Status</label>
           <select name="status" value={form.status} onChange={handleChange}>
@@ -319,7 +318,6 @@ const CreateTask = () => {
           </select>
         </div>
 
-        {/* Priority */}
         <div className="field">
           <label>Priority</label>
           <select name="priority" value={form.priority} onChange={handleChange}>

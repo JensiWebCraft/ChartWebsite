@@ -1,17 +1,10 @@
 import React, { useEffect, useState } from "react";
-import InputField from "../components/common/InputField";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import "./AddUser.scss";
 import { toast } from "react-toastify";
-
-const STORAGE_KEY = "users_list";
-
-const initialFormData = {
-  name: "",
-  email: "",
-  password: "",
-  role: "user",
-};
+import InputField from "../components/common/InputField";
+import { addUser, fetchUsers } from "../store/userSlice"; // adjust path
+import "./AddUser.scss";
 
 const DEFAULT_THEME = {
   primary: "#4f46e5",
@@ -33,14 +26,18 @@ const PASSWORD_RULES = {
 };
 
 const AddUser = () => {
-  const [existingUsers, setExistingUsers] = useState(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored
-      ? JSON.parse(stored)
-      : [{ name: "John Doe", email: "john@example.com" }];
+  const dispatch = useDispatch();
+ 
+
+  const { users, loading } = useSelector((state) => state.users);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "user",
   });
 
-  const [formData, setFormData] = useState(initialFormData);
   const [theme, setTheme] = useState(DEFAULT_THEME);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -49,57 +46,33 @@ const AddUser = () => {
   const [nameTouched, setNameTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
 
+ 
+  useEffect(() => {
+    if (users.length === 0) {
+      dispatch(fetchUsers());
+    }
+  }, [dispatch, users.length]);
+
   const passwordChecks = {
     length: PASSWORD_RULES.length.test(formData.password),
     uppercase: PASSWORD_RULES.uppercase.test(formData.password),
     lowercase: PASSWORD_RULES.lowercase.test(formData.password),
     special: PASSWORD_RULES.special.test(formData.password),
   };
-  const isPasswordValid =
-    passwordChecks.length &&
-    passwordChecks.uppercase &&
-    passwordChecks.lowercase &&
-    passwordChecks.special;
 
-  const isFormValid = () => {
-    if (!formData.name.trim()) return false;
-    if (formData.name.length < 2) return false;
-    // if (checkNameExists(formData.name)) return false;
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) return false;
-    if (checkEmailExists(formData.email)) return false;
-
-    if (!PASSWORD_RULES.length.test(formData.password)) return false;
-    if (!PASSWORD_RULES.uppercase.test(formData.password)) return false;
-    if (!PASSWORD_RULES.lowercase.test(formData.password)) return false;
-    if (!PASSWORD_RULES.special.test(formData.password)) return false;
-
-    return true;
-  };
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(existingUsers));
-  }, [existingUsers]);
-
-  useEffect(() => {
-    if (formData.role === "user") {
-      setTheme(DEFAULT_THEME);
-    }
-  }, [formData.role]);
+  const isPasswordValid = Object.values(passwordChecks).every(Boolean);
 
   const checkNameExists = (name) =>
-    existingUsers.some(
-      (u) => u.name.toLowerCase() === name.trim().toLowerCase()
-    );
+    users.some((u) => u.name?.toLowerCase() === name.trim().toLowerCase());
 
   const checkEmailExists = (email) =>
-    existingUsers.some(
-      (u) => u.email.toLowerCase() === email.trim().toLowerCase()
-    );
+    users.some((u) => u.email?.toLowerCase() === email.trim().toLowerCase());
 
   const generateNameSuggestions = (base) => {
-    if (!base.trim()) return setNameSuggestions([]);
+    if (!base.trim()) {
+      setNameSuggestions([]);
+      return;
+    }
 
     const clean = base.trim().replace(/\s+/g, "");
     const list = [];
@@ -107,47 +80,40 @@ const AddUser = () => {
 
     while (list.length < 5) {
       const candidate = `${clean}${i}`;
-      const exists = existingUsers.some(
-        (u) => u.name.toLowerCase() === candidate.toLowerCase()
-      );
-      if (!exists) list.push(candidate);
+      if (
+        !users.some((u) => u.name?.toLowerCase() === candidate.toLowerCase())
+      ) {
+        list.push(candidate);
+      }
       i++;
     }
     setNameSuggestions(list);
   };
 
-  const validateEmail = () => {
-    let error = "";
-    const email = formData.email.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!email) {
-      error = "Email required";
-    } else if (!emailRegex.test(email)) {
-      error = "Invalid email";
-    } else if (checkEmailExists(email)) {
-      error = "Email already registered";
-    }
-
-    setErrors((prev) => ({ ...prev, email: error }));
-  };
-
   const validateForm = () => {
     const err = {};
 
-    if (!formData.name.trim()) err.name = "Name is required";
-    else if (formData.name.length < 2) err.name = "Minimum 2 characters";
-    else if (checkNameExists(formData.name)) {
+    // Name
+    if (!formData.name.trim()) {
+      err.name = "Name is required";
+    } else if (formData.name.trim().length < 2) {
+      err.name = "Minimum 2 characters";
+    } else if (checkNameExists(formData.name)) {
       err.name = "Name already taken";
       generateNameSuggestions(formData.name);
     }
 
+    // Email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) err.email = "Email required";
-    else if (!emailRegex.test(formData.email)) err.email = "Invalid email";
-    else if (checkEmailExists(formData.email))
+    if (!formData.email.trim()) {
+      err.email = "Email required";
+    } else if (!emailRegex.test(formData.email.trim())) {
+      err.email = "Invalid email";
+    } else if (checkEmailExists(formData.email)) {
       err.email = "Email already registered";
+    }
 
+    // Password
     if (!formData.password) {
       err.password = "Password is required";
     } else if (!PASSWORD_RULES.length.test(formData.password)) {
@@ -166,33 +132,18 @@ const AddUser = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (name === "password") {
       setPasswordTouched(true);
-
-      let error = "";
-
-      if (!PASSWORD_RULES.length.test(value)) {
-        error = "Minimum 8 characters required";
-      } else if (!PASSWORD_RULES.uppercase.test(value)) {
-        error = "At least 1 uppercase letter required";
-      } else if (!PASSWORD_RULES.lowercase.test(value)) {
-        error = "At least 1 lowercase letter required";
-      } else if (!PASSWORD_RULES.special.test(value)) {
-        error = "At least 1 special character required";
-      }
-
-      setErrors((prev) => ({ ...prev, password: error }));
     }
 
-    if (name === "name" && value.length >= 2 && checkNameExists(value)) {
+    if (name === "name" && value.trim().length >= 2 && checkNameExists(value)) {
       generateNameSuggestions(value);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitted(true);
 
@@ -204,35 +155,44 @@ const AddUser = () => {
     const newUser = {
       name: formData.name.trim(),
       email: formData.email.trim(),
-      password: formData.password,
+      password: formData.password, // ← in real app: NEVER send plain password!
       role: formData.role,
       theme: formData.role === "user" ? DEFAULT_THEME : theme,
       createdAt: new Date().toISOString(),
     };
 
-    const updatedUsers = [...existingUsers, newUser];
+    try {
+      await dispatch(addUser(newUser)).unwrap();
+      toast.success("User created successfully 🎉");
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
-    setExistingUsers(updatedUsers);
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        role: "user",
+      });
+      setTheme(DEFAULT_THEME);
+      setErrors({});
+      setSubmitted(false);
+      setNameSuggestions([]);
+      setPasswordTouched(false);
+      setNameTouched(false);
+      setEmailTouched(false);
 
-    toast.success("User created successfully 🎉");
-
-    setFormData(initialFormData);
-    setErrors({});
-    setSubmitted(false);
-    setNameSuggestions([]);
-    setPasswordTouched(false);
-    setNameTouched(false);
-    setEmailTouched(false);
-
-    // OPTIONAL: redirect after short delay
-    // setTimeout(() => navigate("/"), 1500);
+      // Optional: navigate("/users") or "/dashboard"
+      // setTimeout(() => navigate("/users"), 1200);
+    } catch (err) {
+      toast.error("Failed to create user: " + (err.message || "Unknown error"));
+    }
   };
 
   return (
     <div className="add-user-container">
       <div className="card">
         <h2>Create New User</h2>
+
+        {loading && <p style={{ color: "#666" }}>Loading users...</p>}
 
         <form onSubmit={handleSubmit} noValidate>
           <div style={{ position: "relative" }}>
@@ -245,7 +205,7 @@ const AddUser = () => {
               error={submitted || nameTouched ? errors.name : ""}
             />
 
-            {(errors.name || submitted) && nameSuggestions.length > 0 && (
+            {(submitted || nameTouched) && nameSuggestions.length > 0 && (
               <div
                 style={{
                   position: "absolute",
@@ -264,7 +224,6 @@ const AddUser = () => {
                       setFormData((p) => ({ ...p, name: s }));
                       setErrors((p) => ({ ...p, name: "" }));
                       setNameSuggestions([]);
-                      setSubmitted(false);
                     }}
                     style={{
                       padding: "8px 12px",
@@ -291,12 +250,11 @@ const AddUser = () => {
             value={formData.email}
             onChange={(e) => {
               handleChange(e);
-              if (emailTouched) validateEmail();
+              if (emailTouched) {
+                // optional live validation
+              }
             }}
-            onBlur={() => {
-              setEmailTouched(true);
-              validateEmail();
-            }}
+            onBlur={() => setEmailTouched(true)}
             error={submitted || emailTouched ? errors.email : ""}
           />
 
@@ -308,8 +266,15 @@ const AddUser = () => {
             onChange={handleChange}
             error={passwordTouched ? errors.password : ""}
           />
+
           {passwordTouched && !isPasswordValid && (
-            <ul style={{ fontSize: "12px", marginTop: "6px" }}>
+            <ul
+              style={{
+                fontSize: "12px",
+                marginTop: "6px",
+                paddingLeft: "20px",
+              }}
+            >
               <li style={{ color: passwordChecks.length ? "green" : "red" }}>
                 {passwordChecks.length ? "✔" : "✖"} Minimum 8 characters
               </li>
@@ -325,11 +290,11 @@ const AddUser = () => {
             </ul>
           )}
 
-          <div style={{ marginTop: "12px" }}>
+          <div style={{ marginTop: "16px" }}>
             <label>Role</label>
-            <div style={{ display: "flex", gap: "16px" }}>
+            <div style={{ display: "flex", gap: "24px", marginTop: "8px" }}>
               {["superadmin", "admin", "user"].map((r) => (
-                <label key={r}>
+                <label key={r} style={{ cursor: "pointer" }}>
                   <input
                     type="radio"
                     name="role"
@@ -337,14 +302,18 @@ const AddUser = () => {
                     checked={formData.role === r}
                     onChange={handleChange}
                   />{" "}
-                  {r.toUpperCase()}
+                  {r.charAt(0).toUpperCase() + r.slice(1)}
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="form-group" style={{ marginTop: "20px" }}>
+          {/* ────────────────────────────────────────────── */}
+          {/*               THEME SELECTION                  */}
+          {/* ────────────────────────────────────────────── */}
+          <div className="form-group" style={{ marginTop: "24px" }}>
             <label className="form-label">Theme Selection</label>
+
             {formData.role === "superadmin" && (
               <div
                 style={{
@@ -374,7 +343,7 @@ const AddUser = () => {
                       }
                       style={{
                         width: "100%",
-                        height: "40px",
+                        height: "44px",
                         border: "none",
                         cursor: "pointer",
                       }}
@@ -383,12 +352,13 @@ const AddUser = () => {
                 ))}
               </div>
             )}
+
             {formData.role === "admin" && (
               <div
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: "10px",
+                  gap: "12px",
                 }}
               >
                 {Object.keys(ADMIN_COLORS).map((key) => (
@@ -396,49 +366,47 @@ const AddUser = () => {
                     key={key}
                     style={{
                       border: "1px solid #e5e7eb",
-                      borderRadius: "5px",
-                      padding: "5px",
+                      borderRadius: "8px",
+                      padding: "10px",
                       textAlign: "center",
                     }}
                   >
                     <p
                       style={{
                         fontSize: "14px",
-                        fontWeight: "600",
-                        marginBottom: "12px",
+                        fontWeight: 600,
+                        marginBottom: "10px",
                       }}
                     >
                       {key.toUpperCase()}
                     </p>
-
                     <div
                       style={{
                         display: "flex",
                         justifyContent: "center",
-                        gap: "5px",
+                        gap: "8px",
                       }}
                     >
                       {ADMIN_COLORS[key].map((color) => {
                         const selected = theme[key] === color;
-
                         return (
                           <div
                             key={color}
                             onClick={() =>
-                              setTheme((prev) => ({ ...prev, [key]: color }))
+                              setTheme((p) => ({ ...p, [key]: color }))
                             }
                             style={{
-                              width: "17px",
-                              height: "17px",
+                              width: "18px",
+                              height: "18px",
                               borderRadius: "50%",
                               background: color,
                               cursor: "pointer",
+                              border: selected
+                                ? "3px solid #000"
+                                : "2px solid #d1d5db",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              border: selected
-                                ? "3px solid #111"
-                                : "2px solid #e5e7eb",
                             }}
                           >
                             {selected && (
@@ -462,53 +430,54 @@ const AddUser = () => {
             )}
 
             {formData.role === "user" && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: "16px",
-                }}
-              >
-                {Object.entries(DEFAULT_THEME).map(([key, color]) => (
-                  <div
-                    key={key}
-                    style={{
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "10px",
-                      padding: "12px",
-                      textAlign: "center",
-                      opacity: 0.6,
-                    }}
-                  >
-                    <p style={{ fontSize: "13px", marginBottom: "8px" }}>
-                      {key.toUpperCase()}
-                    </p>
+              <div style={{ opacity: 0.6, pointerEvents: "none" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: "16px",
+                  }}
+                >
+                  {Object.entries(DEFAULT_THEME).map(([key, color]) => (
                     <div
+                      key={key}
                       style={{
-                        width: "26px",
-                        height: "26px",
-                        margin: "0 auto",
-                        borderRadius: "50%",
-                        background: color,
-                        border: "1px solid #ccc",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "10px",
+                        padding: "12px",
+                        textAlign: "center",
                       }}
-                    />
-                    <small style={{ fontSize: "11px", color: "#6b7280" }}>
-                      Default
-                    </small>
-                  </div>
-                ))}
+                    >
+                      <p style={{ fontSize: "13px", marginBottom: "8px" }}>
+                        {key.toUpperCase()}
+                      </p>
+                      <div
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          margin: "0 auto",
+                          borderRadius: "50%",
+                          background: color,
+                          border: "1px solid #ccc",
+                        }}
+                      />
+                      <small style={{ fontSize: "11px", color: "#6b7280" }}>
+                        Default
+                      </small>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
           <button
-            style={{ marginTop: "20px" }}
             type="submit"
             className="btn"
-            disabled={!isFormValid()}
+            style={{ marginTop: "28px", width: "100%" }}
+            disabled={loading}
           >
-            Create User
+            {loading ? "Creating..." : "Create User"}
           </button>
         </form>
       </div>

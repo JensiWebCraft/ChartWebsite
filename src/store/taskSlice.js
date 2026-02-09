@@ -57,7 +57,6 @@ export const deleteTask = createAsyncThunk(
   },
 );
 
-/* ───────────── SLICE ───────────── */
 const taskSlice = createSlice({
   name: "tasks",
   initialState: {
@@ -73,7 +72,7 @@ const taskSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* FETCH */
+     
       .addCase(fetchTasks.pending, (state) => {
         state.loading = true;
       })
@@ -86,12 +85,10 @@ const taskSlice = createSlice({
         state.error = action.payload;
       })
 
-      /* CREATE */
       .addCase(createTask.fulfilled, (state, action) => {
         state.tasks.push(action.payload);
       })
 
-      /* UPDATE (Optimistic UI) */
       .addCase(updateTask.pending, (state, action) => {
         const { id, data } = action.meta.arg;
         const task = state.tasks.find((t) => String(t.id) === String(id));
@@ -104,7 +101,6 @@ const taskSlice = createSlice({
         if (index !== -1) state.tasks[index] = action.payload;
       })
 
-      /* DELETE */
       .addCase(deleteTask.fulfilled, (state, action) => {
         state.tasks = state.tasks.filter(
           (t) => String(t.id) !== String(action.payload),
